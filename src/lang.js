@@ -1,0 +1,1 @@
+(()=>{try{if(localStorage.getItem('lg'))return;const S=['es','pt','id','hi','ar'];for(const x of navigator.languages||[navigator.language||'en']){let p=String(x).slice(0,2).toLowerCase();if(p==='in')p='id';if(p==='en')return;if(S.includes(p)){location.replace('/'+p+'/');return}}}catch(e){}})();
