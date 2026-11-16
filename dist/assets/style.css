@@ -63,3 +63,5 @@ fieldset.opts legend{padding-inline:.4rem;font-weight:600}
 label.chk{display:flex;align-items:center;gap:.6rem;font-weight:500;min-height:2.75rem;margin:0;cursor:pointer}
 input[type=checkbox]{width:1.25rem;height:1.25rem;flex:none;accent-color:var(--pri)}
 .sw{width:100%;height:3.5rem;margin-top:.4rem;border:1px solid var(--ln);border-radius:10px}
+.donate{margin:.7rem 0 0;font-size:.95rem}.donate a{font-weight:600}
+.prose ol.steps{margin:.5rem 0 1.2rem;padding-inline-start:1.5rem}.prose ol.steps li{margin:.4rem 0}.prose h3{font-size:1.05rem;margin:1.1rem 0 .25rem}
