@@ -23,6 +23,7 @@ The build stops with an error if a tool is missing text, steps or FAQ for any la
 
 ## Extend
 - New tool: add it to `data/tools.js` and `data/content-a.js`/`content-b.js` (all six languages) and add an entry with the same id in `T` (src/app.js). UI labels go in `data/i18n.js`.
+- Tool-specific UI labels (used by one tool only) can go in a `ui` object on its entry in `data/tools.js` (six values per key); they are added to that tool's pages only. A tool with its own layout sets `custom` in `T` (see the APA 7 reference generator, `apa-reference-generator`).
 - New language: add its code to `L`, `LN`, `OG` and one value per key in `data/i18n.js`, a block in `data/legal.js`, and its text for each tool in `data/tools.js`. The AI cleaner's chatbot phrases (OPEN/CLOSE in src/app.js) can be extended too.
 - Contact email is only a mailto link: use a real mailbox.
 - Favicon is SVG; add PNG/ICO (48px+) if you want maximum compatibility in search results.
