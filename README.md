@@ -5,7 +5,8 @@ Static site generator + tiny Node server. No runtime dependencies (Node 18+).
     node server.js            # or upload dist/ to any static host (Netlify/Cloudflare read dist/_headers)
 
 ## AdSense
-Ads are off until you set `ADSENSE_CLIENT=ca-pub-XXXX` and `ADSENSE_SLOT=<slot id>` and rebuild. This adds the AdSense script, ads.txt and a relaxed CSP.
+Ads are on by default with publisher ID `ca-pub-2825174737543657`. The build adds the AdSense script and the `google-adsense-account` meta tag to every page, writes `dist/ads.txt`, and relaxes the CSP. Override with `ADSENSE_CLIENT=ca-pub-XXXX`, or disable with `ADSENSE_CLIENT=` (empty) and rebuild.
+Set `ADSENSE_SLOT=<slot id>` to also load `assets/ads.js` for manual ad units (`.adsbygoogle`); without it only the script, meta tag and ads.txt are active (suitable for Auto ads).
 Before enabling ads for visitors in the EEA/UK/Switzerland, add a Google-certified consent banner (CMP). Not included.
 Approval depends on Google's review of the live site; nothing here can guarantee it.
 
