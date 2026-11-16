@@ -65,3 +65,9 @@ input[type=checkbox]{width:1.25rem;height:1.25rem;flex:none;accent-color:var(--p
 .sw{width:100%;height:3.5rem;margin-top:.4rem;border:1px solid var(--ln);border-radius:10px}
 .donate{margin:.7rem 0 0;font-size:.95rem}.donate a{font-weight:600}
 .prose ol.steps{margin:.5rem 0 1.2rem;padding-inline-start:1.5rem}.prose ol.steps li{margin:.4rem 0}.prose h3{font-size:1.05rem;margin:1.1rem 0 .25rem}
+.apa .flds textarea{min-height:5.5rem}
+.apa-res{margin:.4rem 0 0;padding:.9rem 1rem;background:var(--bg);border:1px solid var(--ln);border-radius:10px}.apa-res:empty{display:none}
+.ref{margin:0;padding-inline-start:2rem;text-indent:-2rem;line-height:1.7;font-family:Georgia,"Times New Roman","Noto Serif Devanagari","Noto Naskh Arabic",serif}
+.cite{margin:.5rem 0 0;color:var(--mut);font-size:.95rem}
+ul.reflist{list-style:none;margin:.4rem 0 0;padding:0;display:grid;gap:.6rem}ul.reflist li{padding:.8rem 1rem;background:var(--bg);border:1px solid var(--ln);border-radius:10px}
+.acts.sm{margin-top:.5rem}.acts.sm .btn{padding:.35rem .8rem;font-size:.9rem}

@@ -296,6 +296,291 @@ const parseDate = s => {
   return dt.getMonth() === Mo - 1 && dt.getDate() === D ? dt : bad();
 };
 
+/* ---------- APA 7 reference generator: formatting core (pure functions, no DOM) ---------- */
+/* APA-CORE-START */
+/* Terms per reference language. th = thesis levels (doctoral, master's, bachelor's), ct = presentation types, unp = "unpublished" template. */
+const APA_X = {
+  en: { nd: 'n.d.', inw: 'In', ed: 'Ed.', eds: 'Eds.', p: 'p.', pp: 'pp.', art: 'Article', ret: 'Retrieved {d}, from {u}', rep: 'Report No.', and: 'and', etal: 'et al.', refs: 'References', vid: 'Video', cm: ', ', unp: 'unpublished {t}', th: ['doctoral dissertation', 'master’s thesis', 'bachelor’s thesis'], ct: ['Paper presentation', 'Poster presentation', 'Keynote address', 'Symposium'] },
+  es: { nd: 's. f.', inw: 'En', ed: 'Ed.', eds: 'Eds.', p: 'p.', pp: 'pp.', art: 'Artículo', ret: 'Recuperado el {d} de {u}', rep: 'Informe n.º', and: 'y', etal: 'et al.', refs: 'Referencias', vid: 'Video', cm: ', ', unp: '{t} inédita', th: ['tesis doctoral', 'tesis de maestría', 'tesis de licenciatura'], ct: ['Presentación de ponencia', 'Presentación de póster', 'Conferencia magistral', 'Simposio'] },
+  pt: { nd: 's.d.', inw: 'Em', ed: 'Org.', eds: 'Orgs.', p: 'p.', pp: 'p.', art: 'Artigo', ret: 'Recuperado em {d}, de {u}', rep: 'Relatório n.º', and: 'e', etal: 'et al.', refs: 'Referências', vid: 'Vídeo', cm: ', ', unp: '{t} não publicada', th: ['tese de doutorado', 'dissertação de mestrado', 'monografia de graduação'], ct: ['Apresentação de trabalho', 'Apresentação de pôster', 'Palestra de abertura', 'Simpósio'] },
+  id: { nd: 't.t.', inw: 'Dalam', ed: 'Ed.', eds: 'Eds.', p: 'hlm.', pp: 'hlm.', art: 'Artikel', ret: 'Diakses pada {d}, dari {u}', rep: 'Laporan No.', and: 'dan', etal: 'dkk.', refs: 'Daftar Pustaka', vid: 'Video', cm: ', ', unp: '{t} tidak dipublikasikan', th: ['disertasi doktoral', 'tesis magister', 'skripsi'], ct: ['Presentasi makalah', 'Presentasi poster', 'Pidato kunci', 'Simposium'] },
+  hi: { nd: 'n.d.', inw: 'In', ed: 'सं.', eds: 'सं.', p: 'पृ.', pp: 'पृ.', art: 'लेख', ret: 'पुनर्प्राप्त {d}, {u} से', rep: 'रिपोर्ट सं.', and: 'और', etal: 'et al.', refs: 'संदर्भ', vid: 'वीडियो', cm: ', ', unp: 'अप्रकाशित {t}', th: ['डॉक्टरेट शोध-प्रबंध', 'मास्टर्स शोध-प्रबंध', 'स्नातक शोध-प्रबंध'], ct: ['पेपर प्रस्तुति', 'पोस्टर प्रस्तुति', 'मुख्य भाषण', 'संगोष्ठी'] },
+  ar: { nd: 'د.ت.', inw: 'في', ed: 'محرر', eds: 'محررون', p: 'ص', pp: 'ص', art: 'مقالة', ret: 'تاريخ الاسترجاع {d}، من {u}', rep: 'تقرير رقم', and: 'و', etal: 'وآخرون', refs: 'المراجع', vid: 'فيديو', cm: '، ', unp: '{t} غير منشورة', th: ['أطروحة دكتوراه', 'رسالة ماجستير', 'رسالة بكالوريوس'], ct: ['عرض ورقة بحثية', 'عرض ملصق علمي', 'كلمة رئيسية', 'ندوة'] }
+};
+const APA_FULL = ['magazine', 'newspaper', 'webpage', 'conference', 'video'];
+const apaSeg = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+const apaCh1 = s => { const a = apaSeg ? [...apaSeg.segment(s)].map(x => x.segment) : [...s]; return a.length ? a[0] : ''; };
+const apaCap = s => s ? apaCh1(s).toUpperCase() + s.slice(apaCh1(s).length) : s;
+/* "Jean-Paul Marie" -> "J.-P. M." (also accepts "J.K." or "J. K.") */
+const APA_PART = /^(de|da|do|dos|das|del|della|di|van|von|der|den|la|le|bin|binti|ibn|al|el)$/;
+const apaInit = g => g.split(/[\s.]+/).filter(x => x && !APA_PART.test(x)).map(t => t.split('-').filter(Boolean).map(p => apaCh1(p).toUpperCase() + '.').join('-')).join(' ');
+const apaNames = (txt, org) => String(txt || '').split(/\r?\n|;/).map(x => x.trim()).filter(Boolean).map(l => {
+  if (org) return { org: l };
+  const c = l.split(',').map(x => x.trim());
+  if (c.length > 1 && c[0]) return { fam: c[0], giv: c[1], suf: c.slice(2).filter(Boolean).join(', ') };
+  const t = l.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+  if (t.length === 1) return { fam: t[0], giv: '', suf: '' };
+  /* "Smith J" / "Smith JK": a last word made only of initials means the family name comes first */
+  if (/^[\p{Lu}.]{1,4}$/u.test(t[t.length - 1]) && !/^[\p{Lu}.]{1,4}$/u.test(t[0])) return { fam: t[0], giv: t.slice(1).join(' ').replace(/\./g, '').replace(/(\p{Lu})(?=\p{Lu})/gu, '$1 '), suf: '' };
+  /* "Simone de Beauvoir": lower-case particles before the last word belong to the family name */
+  let k = t.length - 1; while (k > 1 && APA_PART.test(t[k - 1])) k--;
+  return { fam: t.slice(k).join(' '), giv: t.slice(0, k).join(' '), suf: '' };
+});
+const apaRef = n => n.org || n.fam + (n.giv ? ', ' + apaInit(n.giv) : '') + (n.suf ? ', ' + n.suf : '');
+const apaEd = n => n.org || (n.giv ? apaInit(n.giv) + ' ' : '') + n.fam;
+const apaJoin = a => a.length === 1 ? a[0] : a.length === 2 ? a[0] + ', & ' + a[1]
+  : a.length <= 20 ? a.slice(0, -1).join(', ') + ', & ' + a[a.length - 1]
+  : a.slice(0, 19).join(', ') + ', … ' + a[a.length - 1];
+const apaJoinEd = a => a.length === 1 ? a[0] : a.length === 2 ? a[0] + ' & ' + a[1] : a.slice(0, -1).join(', ') + ', & ' + a[a.length - 1];
+const apaMonth = (m, rl) => new Intl.DateTimeFormat(rl === 'ar' ? 'ar-u-nu-latn-ca-gregory' : rl + '-u-nu-latn', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2020, m - 1, 15)));
+const apaDate = (y, m, d, rl) => {
+  const X = APA_X[rl]; y = String(y || '').trim();
+  let s = !y || /^n\.?\s?d\.?$/i.test(y) ? X.nd : y;
+  m = Number(m);
+  if (m >= 1 && m <= 12) {
+    const mn = apaMonth(m, rl), dd = String(d || '').trim().replace(/\s*[-–—]\s*/g, '–');
+    const ok = /^\d{1,2}(–\d{1,2})?$/.test(dd);
+    s += ', ' + (!ok ? mn : rl === 'en' ? mn + ' ' + dd : rl === 'es' || rl === 'pt' ? dd + ' de ' + mn : dd + ' ' + mn);
+  }
+  return s;
+};
+const apaLong = (ymd, rl) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || ''); if (!m) return '';
+  const mn = apaMonth(+m[2], rl), d = +m[3], y = m[1];
+  return rl === 'en' ? `${mn} ${d}, ${y}` : rl === 'es' || rl === 'pt' ? `${d} de ${mn} de ${y}` : `${d} ${mn} ${y}`;
+};
+const apaEdition = (v, rl) => {
+  v = String(v || '').trim(); if (!v) return '';
+  if (!/^\d+$/.test(v)) return v;
+  const n = Number(v); if (n < 2) return '';
+  return rl === 'en' ? n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10 > 3 ? 0 : n % 10]) + ' ed.'
+    : rl === 'es' || rl === 'pt' ? n + '.ª ed.' : rl === 'id' ? 'ed. ke-' + n : rl === 'hi' ? 'संस्करण ' + n : 'الطبعة ' + n;
+};
+const apaRange = p => p.replace(/\s*[-–—]\s*/g, '–');
+const apaIsRange = p => /[–,]/.test(p);
+const apaLink = s => {
+  s = String(s || '').trim(); if (!s) return '';
+  const m = /^(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:\s*)?(10\.\d{4,9}\/\S+)$/i.exec(s);
+  if (m) return 'https://doi.org/' + m[1];
+  return /^www\./i.test(s) ? 'https://' + s : s;
+};
+/* sentence case: lower-case words except the first word, words after a colon or sentence end, and acronyms / CamelCase */
+const apaSentence = s => {
+  let start = true;
+  return s.replace(/\S+/g, w => {
+    const m = /^([("'“‘\[]*)([\s\S]*)$/.exec(w), pre = m[1], rest = m[2];
+    const keep = /\p{Lu}/u.test(rest.slice(apaCh1(rest).length)) || rest === 'I';
+    const out = keep ? rest : start ? apaCap(rest.toLowerCase()) : rest.toLowerCase();
+    start = /[:?!.]["'”’)\]]*$/.test(w);
+    return pre + out;
+  });
+};
+/* segments: [[text, italic?], ...] */
+const apaSegT = s => s === '' || s == null ? [] : [[String(s), 0]];
+const apaSegI = s => s === '' || s == null ? [] : [[String(s), 1]];
+const apaSegEnd = a => a.length && !/[.?!]$/.test(a[a.length - 1][0]) ? [...a, ['.', 0]] : a;
+const apaSegJoin = els => {
+  const out = [];
+  els.filter(e => e && e.length).forEach((e, i) => { if (i) out.push([' ', 0]); out.push(...e); });
+  return out.reduce((acc, s) => { const l = acc[acc.length - 1]; if (l && l[1] === s[1]) l[0] += s[0]; else acc.push([s[0], s[1]]); return acc; }, []);
+};
+const apaText = segs => segs.map(s => s[0]).join('');
+const apaBuild = (d, rl) => {
+  const X = APA_X[rl], ty = d.type, full = APA_FULL.includes(ty);
+  const au = apaNames(d.authors, d.org), cap = s => { s = String(s || '').trim(); return d.sc ? apaSentence(s) : s; };
+  const title = cap(d.title), cont = String(d.cont || '').trim();
+  if (!title) return null;
+  const orgAu = au.length === 1 && au[0].org ? au[0].org.toLowerCase() : '';
+  const same = s => !!orgAu && String(s || '').trim().toLowerCase() === orgAu;
+  const vol = String(d.vol || '').trim(), iss = String(d.iss || '').trim(), pgRaw = String(d.pages || '').trim();
+  const pub = String(d.pub || '').trim(), site = String(d.site || '').trim(), edn = apaEdition(d.ed, rl);
+  const link = apaLink(d.link), acc = apaLong(d.acc, rl);
+  let aEl = [];
+  if (au.length) {
+    aEl = apaSegT(apaJoin(au.map(apaRef)));
+    aEl = d.aseds && ty === 'book' ? [...aEl, [' (' + (au.length > 1 ? X.eds : X.ed) + ').', 0]] : apaSegEnd(aEl);
+  }
+  const dEl = apaSegT('(' + apaDate(d.year, full ? d.month : '', full ? d.day : '', rl) + ').');
+  const linkEl = !link ? [] : acc && ['webpage', 'report', 'video'].includes(ty) ? apaSegT(X.ret.replace('{d}', acc).replace('{u}', link)) : apaSegT(link);
+  const pubEl = pub && !same(pub) ? apaSegEnd(apaSegT(pub)) : [];
+  const siteEl = site && !same(site) ? apaSegEnd(apaSegT(site)) : [];
+  let tEl, rest = [], plainTitle = false;
+  if (ty === 'journal' || ty === 'magazine') {
+    plainTitle = true; tEl = apaSegEnd(apaSegT(title));
+    let pg = pgRaw ? (/^[A-Za-z]?\d+$/.test(pgRaw) ? X.art + ' ' + pgRaw : apaRange(pgRaw)) : '';
+    rest = [apaSegEnd([...(cont ? apaSegI(cont + (vol ? ', ' + vol : '')) : []), ...(iss ? apaSegT('(' + iss + ')') : []), ...(pg ? apaSegT((cont ? ', ' : '') + pg) : [])]), linkEl];
+  } else if (ty === 'newspaper') {
+    plainTitle = true; tEl = apaSegEnd(apaSegT(title));
+    const pg = pgRaw ? apaRange(pgRaw) : '';
+    rest = [apaSegEnd([...apaSegI(cont), ...(pg ? apaSegT(', ' + (apaIsRange(pg) ? X.pp : X.p) + ' ' + pg) : [])]), linkEl];
+  } else if (ty === 'book') {
+    tEl = apaSegEnd([...apaSegI(title), ...(edn ? apaSegT(' (' + edn + ')') : [])]); rest = [pubEl, linkEl];
+  } else if (ty === 'chapter') {
+    plainTitle = true; tEl = apaSegEnd(apaSegT(title));
+    const eds = apaNames(d.editors, false), n = eds.length;
+    const edTxt = n ? apaJoinEd(eds.map(apaEd)) + ' (' + (n > 1 ? X.eds : X.ed) + '), ' : '';
+    const pg = pgRaw ? apaRange(pgRaw) : '', par = [edn, pg ? (apaIsRange(pg) ? X.pp : X.p) + ' ' + pg : ''].filter(Boolean).join(', ');
+    rest = [apaSegEnd([...apaSegT(X.inw + ' ' + edTxt), ...apaSegI(cont), ...(par ? apaSegT(' (' + par + ')') : [])]), pubEl, linkEl];
+  } else if (ty === 'webpage') {
+    tEl = apaSegEnd(apaSegI(title)); rest = [siteEl, linkEl];
+  } else if (ty === 'report') {
+    const rno = String(d.rno || '').trim();
+    tEl = apaSegEnd([...apaSegI(title), ...(rno ? apaSegT(' (' + X.rep + ' ' + rno + ')') : [])]); rest = [pubEl, linkEl];
+  } else if (ty === 'thesis') {
+    const lv = Math.min(2, Math.max(0, Number(d.tlevel) || 0)), inst = String(d.inst || '').trim();
+    const base = d.unp ? X.unp.replace('{t}', X.th[lv]) : X.th[lv];
+    tEl = apaSegEnd([...apaSegI(title), ...apaSegT(' [' + apaCap(base) + (inst ? X.cm + inst : '') + ']')]);
+    rest = d.unp ? [] : [siteEl, linkEl];
+  } else if (ty === 'conference') {
+    const place = String(d.place || '').trim(), ci = Math.min(3, Math.max(0, Number(d.ctype) || 0));
+    tEl = apaSegEnd([...apaSegI(title), ...apaSegT(' [' + X.ct[ci] + ']')]);
+    rest = [cont || place ? apaSegEnd(apaSegT(cont + (cont && place ? X.cm : '') + place)) : [], linkEl];
+  } else if (ty === 'video') {
+    tEl = apaSegEnd([...apaSegI(title), ...apaSegT(' [' + X.vid + ']')]); rest = [siteEl, linkEl];
+  } else return null;
+  const segs = au.length ? apaSegJoin([aEl, dEl, tEl, ...rest]) : apaSegJoin([tEl, dEl, ...rest]);
+  /* in-text citations */
+  const yr = /^n\.?\s?d\.?$/i.test(String(d.year || '').trim()) || !String(d.year || '').trim() ? X.nd : String(d.year).trim();
+  const fam = n => n.org || n.fam;
+  let par, nar;
+  if (au.length) {
+    const who = au.length === 1 ? [fam(au[0]), fam(au[0])] : au.length === 2 ? [fam(au[0]) + ' & ' + fam(au[1]), fam(au[0]) + ' ' + X.and + ' ' + fam(au[1])] : [fam(au[0]) + ' ' + X.etal, fam(au[0]) + ' ' + X.etal];
+    par = apaSegT('(' + who[0] + ', ' + yr + ')'); nar = apaSegT(who[1] + ' (' + yr + ')');
+  } else {
+    const w = title.replace(/[.:,;]+$/, '').split(/\s+/), sh = w.length > 5 ? w.slice(0, 4).join(' ') + '…' : w.join(' ');
+    if (plainTitle) { par = apaSegT('(“' + sh + ',” ' + yr + ')'); nar = apaSegT('“' + sh + '” (' + yr + ')'); }
+    else { par = [['(', 0], [sh, 1], [', ' + yr + ')', 0]]; nar = [[sh, 1], [' (' + yr + ')', 0]]; }
+  }
+  const key = (au.length ? au.map(n => n.org || n.fam + ' ' + (n.giv || '')).join(' ') : title.replace(rl === 'en' ? /^(a|an|the)\s+/i : /^$/, ''));
+  const yn = parseInt(String(d.year || ''), 10);
+  return { segs, par, nar, key, y: Number.isFinite(yn) ? yn : -1 };
+};
+const apaSort = (rows, rl) => rows.slice().sort((a, b) => a.r.key.localeCompare(b.r.key, rl, { sensitivity: 'base', ignorePunctuation: true }) || a.r.y - b.r.y);
+/* APA-CORE-END */
+
+/* ---------- APA 7 reference generator: interface (own layout: form, preview, sorted list) ---------- */
+const apaUI = root => {
+  const ui = k => I[k] || k, NAMES = { en: 'English', es: 'Español', pt: 'Português', id: 'Bahasa Indonesia', hi: 'हिन्दी', ar: 'العربية' };
+  const XL = APA_X[lang] || APA_X.en, TYPES = ['journal', 'magazine', 'newspaper', 'book', 'chapter', 'webpage', 'report', 'thesis', 'conference', 'video'];
+  /* which fields each source type uses */
+  const VIS = {
+    month: APA_FULL, day: APA_FULL, cont: ['journal', 'magazine', 'newspaper', 'chapter', 'conference'], vol: ['journal', 'magazine'], iss: ['journal', 'magazine'],
+    pages: ['journal', 'magazine', 'newspaper', 'chapter'], ed: ['book', 'chapter'], editors: ['chapter'], pub: ['book', 'chapter', 'report'], site: ['webpage', 'video', 'thesis'],
+    inst: ['thesis'], tlevel: ['thesis'], rno: ['report'], ctype: ['conference'], place: ['conference'], acc: ['webpage', 'report', 'video']
+  };
+  const DYN = { cont: { journal: 'a_cj', magazine: 'a_cm', newspaper: 'a_cm', chapter: 'a_cb', conference: 'a_cc' }, site: { webpage: 'a_sw', video: 'a_sv', thesis: 'a_st' } };
+  const LAB = { type: 'a_type', rl: 'a_rl', authors: 'a_au', editors: 'a_ed', year: 'a_yr', month: 'a_mo', day: 'a_dy', title: 'a_ti', cont: 'a_cj', vol: 'a_vo', iss: 'a_is', pages: 'a_pg', ed: 'a_edn', pub: 'a_pub', site: 'a_sw', inst: 'a_in', tlevel: 'a_lv', rno: 'a_rn', ctype: 'a_ct', place: 'a_pl', link: 'a_lk', acc: 'a_ac' };
+  const KINDS = [['type', 'sel'], ['rl', 'sel'], ['authors', 'area'], ['editors', 'area'], ['year', 'txt'], ['month', 'sel'], ['day', 'txt'], ['title', 'txt'], ['cont', 'txt'], ['vol', 'txt'], ['iss', 'txt'], ['pages', 'txt'], ['ed', 'txt'], ['pub', 'txt'], ['site', 'txt'], ['inst', 'txt'], ['tlevel', 'sel'], ['rno', 'txt'], ['ctype', 'sel'], ['place', 'txt'], ['link', 'txt'], ['acc', 'date']];
+  const CHK = [['org', 'a_org'], ['aseds', 'a_aed'], ['unp', 'a_unp'], ['sc', 'a_sc']];
+  const opts = {
+    type: TYPES.map(x => [x, ui('a_t_' + x)]), rl: Object.keys(NAMES).map(x => [x, NAMES[x]]),
+    tlevel: XL.th.map((x, i) => [String(i), apaCap(x)]), ctype: XL.ct.map((x, i) => [String(i), x]), month: []
+  };
+  const el = {}, wrap = {}, lab = {}, chkWrap = {};
+  const fl = h('div', { className: 'flds' });
+  for (const [k, kind] of KINDS) {
+    const id = 'a-' + k; let c;
+    if (kind === 'area') c = h('textarea', { id, spellcheck: false, dir: 'auto' });
+    else if (kind === 'sel') c = h('select', { id }, ...opts[k].map(([v, l]) => h('option', { value: v }, l)));
+    else if (kind === 'date') c = h('input', { id, type: 'date' });
+    else c = h('input', { id, type: 'text', spellcheck: false, autocomplete: 'off', dir: 'auto' });
+    el[k] = c; lab[k] = h('label', { htmlFor: id }, ui(LAB[k]));
+    wrap[k] = h('div', { className: 'fld' + (kind === 'area' || k === 'title' || k === 'link' ? ' full' : '') }, lab[k], c);
+    fl.append(wrap[k]);
+  }
+  el.rl.value = NAMES[lang] ? lang : 'en';
+  const grp = h('fieldset', { className: 'fld full opts' }, h('legend', {}, I.opts));
+  for (const [k, key] of CHK) {
+    const id = 'a-' + k; el[k] = h('input', { id, type: 'checkbox' });
+    chkWrap[k] = h('label', { className: 'chk', htmlFor: id }, el[k], h('span', {}, ui(key)));
+    grp.append(chkWrap[k]);
+  }
+  fl.append(grp);
+  const fillMonths = () => {
+    const cur = el.month.value;
+    el.month.replaceChildren(h('option', { value: '' }, '—'), ...Array.from({ length: 12 }, (_, i) => h('option', { value: String(i + 1) }, apaMonth(i + 1, el.rl.value))));
+    el.month.value = cur;
+  };
+  fillMonths();
+  const keepKeys = ['type', 'rl', 'sc'];
+  const reset = () => { for (const k in el) { if (keepKeys.includes(k)) continue; if (el[k].type === 'checkbox') el[k].checked = false; else if (el[k].tagName === 'SELECT') el[k].selectedIndex = 0; else el[k].value = ''; } };
+  const val = () => { const v = {}; for (const k in el) v[k] = el[k].type === 'checkbox' ? el[k].checked : el[k].value; return v; };
+  const rlv = () => el.rl.value, dirOf = () => rlv() === 'ar' ? 'rtl' : 'ltr';
+  const segDom = segs => segs.map(([t, i]) => i ? h('i', {}, t) : t);
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const segHtml = segs => segs.map(([t, i]) => i ? '<i>' + esc(t) + '</i>' : esc(t)).join('');
+  const pStyle = () => `margin:${dirOf() === 'rtl' ? '0 .5in 0 0' : '0 0 0 .5in'};text-indent:-.5in;line-height:2;font-family:'Times New Roman',Times,serif;font-size:12pt`;
+  const pHtml = segs => `<p dir="${dirOf()}" style="${pStyle()}">${segHtml(segs)}</p>`;
+  let list = [], blobUrl = '';
+  const rows = () => apaSort(list.map(d => ({ d, r: apaBuild(d, rlv()) })).filter(x => x.r), rlv());
+
+  /* preview */
+  const pv = h('div', { className: 'apa-res', role: 'status', tabIndex: 0 }), ct = h('p', { className: 'cite' });
+  const cpOne = h('button', { className: 'btn alt', type: 'button', hidden: true }, I.copy);
+  const flash = (b, label) => { b.textContent = I.copied; setTimeout(() => { b.textContent = label; }, 1500); };
+  const copyRich = async (html, text, b, label) => {
+    try {
+      if (navigator.clipboard && window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+      else await navigator.clipboard.writeText(text);
+      flash(b, label);
+    } catch (e) { try { await navigator.clipboard.writeText(text); flash(b, label); } catch (_) { /* clipboard blocked */ } }
+  };
+  let cur = null;
+  const refresh = () => {
+    const ty = el.type.value;
+    for (const k in VIS) wrap[k].hidden = !VIS[k].includes(ty);
+    chkWrap.aseds.hidden = ty !== 'book'; chkWrap.unp.hidden = ty !== 'thesis';
+    for (const k in DYN) lab[k].textContent = ui(DYN[k][ty] || LAB[k]);
+    pv.dir = dirOf(); cur = apaBuild(val(), rlv());
+    pv.replaceChildren(...(cur ? [h('p', { className: 'ref' }, ...segDom(cur.segs))] : []));
+    ct.replaceChildren(...(cur ? [`${ui('a_cite')}: `, ...segDom(cur.par), ' · ', ...segDom(cur.nar)] : []));
+    ct.dir = dirOf(); ct.hidden = cpOne.hidden = !cur;
+  };
+
+  /* list */
+  const ul = h('ul', { className: 'reflist' }), empty = h('p', { className: 'note' }, ui('a_empty')), lh = h('h2', { id: 'apa-lt' });
+  const cpAll = h('button', { className: 'btn alt', type: 'button' }, ui('a_cpl')), dl = h('a', { className: 'btn alt', download: 'celverter-apa-references.html' }, I.download);
+  const clAll = h('button', { className: 'btn alt', type: 'button' }, ui('a_cll')), lact = h('div', { className: 'acts' }, cpAll, dl, clAll);
+  const addBtn = h('button', { className: 'btn', type: 'submit' }, ui('a_add')), clrBtn = h('button', { className: 'btn alt', type: 'button' }, I.clear);
+  const edit = d => {
+    list.splice(list.indexOf(d), 1);
+    for (const k in el) { if (k === 'rl') continue; if (el[k].type === 'checkbox') el[k].checked = !!d[k]; else el[k].value = d[k]; }
+    renderList(); refresh(); el.title.focus();
+  };
+  const renderList = () => {
+    const rs = rows(), rl = rlv();
+    lh.textContent = ui('a_list') + (rs.length ? ' (' + nf(rs.length, 0) + ')' : '');
+    ul.dir = dirOf(); empty.hidden = rs.length > 0; lact.hidden = ul.hidden = !rs.length;
+    ul.replaceChildren(...rs.map(({ d, r }) => h('li', {}, h('p', { className: 'ref' }, ...segDom(r.segs)),
+      h('div', { className: 'acts sm' }, h('button', { className: 'btn alt', type: 'button', onclick: () => edit(d) }, ui('a_edit')),
+        h('button', { className: 'btn alt', type: 'button', onclick: () => { list.splice(list.indexOf(d), 1); renderList(); } }, ui('a_rm'))))));
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+    blobUrl = '';
+    if (rs.length) {
+      const doc = `<!doctype html><html lang="${rl}" dir="${dirOf()}"><head><meta charset="utf-8"><title>${esc(APA_X[rl].refs)}</title></head><body style="font-family:'Times New Roman',Times,serif;font-size:12pt"><p style="text-align:center;font-weight:bold;line-height:2;margin:0">${esc(APA_X[rl].refs)}</p>${rs.map(x => pHtml(x.r.segs)).join('')}</body></html>`;
+      blobUrl = URL.createObjectURL(new Blob([doc], { type: 'text/html' })); dl.href = blobUrl;
+    }
+  };
+  const add = () => {
+    const d = val();
+    if (!apaBuild(d, rlv())) { el.title.focus(); return; }
+    list.push(d); reset(); renderList(); refresh();
+  };
+
+  const form = h('form', { noValidate: true, autocomplete: 'off' }, fl, h('div', { className: 'acts' }, addBtn, clrBtn));
+  form.addEventListener('submit', e => { e.preventDefault(); add(); });
+  form.addEventListener('input', e => { if (e.target === el.rl) { fillMonths(); renderList(); } refresh(); });
+  clrBtn.addEventListener('click', () => { reset(); refresh(); });
+  cpOne.addEventListener('click', () => { if (cur) copyRich(pHtml(cur.segs), apaText(cur.segs), cpOne, I.copy); });
+  cpAll.addEventListener('click', () => { const rs = rows(); if (rs.length) copyRich(rs.map(x => pHtml(x.r.segs)).join(''), rs.map(x => apaText(x.r.segs)).join('\n\n'), cpAll, ui('a_cpl')); });
+  clAll.addEventListener('click', () => { list = []; renderList(); });
+  const kofi = h('p', { className: 'donate' }, h('a', { href: 'https://ko-fi.com/celverter', target: '_blank', rel: 'noopener noreferrer' }, '☕ ' + (I.donate || 'Support Celverter on Ko-fi')));
+  root.replaceChildren(form, h('h2', { id: 'apa-pt' }, ui('a_prev')), pv, ct, h('div', { className: 'acts' }, cpOne), lh, empty, ul, lact, h('p', { className: 'note' }, ui('a_note')), kofi);
+  pv.setAttribute('aria-labelledby', 'apa-pt');
+  root.classList.add('apa');
+  renderList(); refresh();
+};
+
 /* ---------- tool registry: id -> { live, f: fields, run } ---------- */
 const T = {
   'word-counter': { live: 1, f: [A('input')], run: v => `${I.words}: ${nf((v.input.match(/\S+/g) || []).length, 0)}\n${I.chars}: ${nf(countChars(v.input), 0)}\n${I.lines}: ${nf(v.input.split('\n').length, 0)}` },
@@ -309,6 +594,7 @@ const T = {
   'remove-duplicate-lines': { live: 1, f: [A('input')], run: v => { const s = new Set(); return v.input.split('\n').filter(x => !s.has(x) && s.add(x)).join('\n'); } },
   'remove-line-breaks': { live: 1, f: [A('input')], run: v => v.input.replace(/\s*\r?\n\s*/g, ' ').trim() },
   'sort-lines': { live: 1, f: [A('input'), S('mode', [['asc', 'A → Z'], ['desc', 'Z → A']])], run: v => { const a = v.input.split('\n').sort((x, y) => x.localeCompare(y, lang, { numeric: true })); return (v.mode === 'desc' ? a.reverse() : a).join('\n'); } },
+  'apa-reference-generator': { custom: apaUI },
 
   'morse-code': { live: 1, f: [A('input'), ModeSel('t2m', 'm2t'), S('alpha', [['lat', I.lat || 'Latin'], ['ara', I.ara || 'Arabic']])], run: v => v.mode === 't2m' ? morseEnc(v.input, v.alpha === 'ara') : morseDec(v.input, v.alpha === 'ara') },
   'caesar-cipher': { live: 1, f: [A('input'), ModeSel('encr', 'decr'), N('shift', 3, { min: 1, max: 25, step: 1 })], run: v => { const k = num(v.shift); (Number.isInteger(k) && k >= 1 && k <= 25) || bad(); return rot(v.input, v.mode === 'encr' ? k : -k); } },
@@ -373,6 +659,7 @@ for (const key in UNITS) T[key] = unitTool(key);
 /* ---------- build the tool UI ---------- */
 const box = $('.tool');
 if (!box || !T[box.dataset.tool]) return;
+if (T[box.dataset.tool].custom) { T[box.dataset.tool].custom($('#ui')); return; }
 const tool = T[box.dataset.tool], root = $('#ui'), el = {}, fl = h('div', { className: 'flds' }), form = h('form', { noValidate: true, autocomplete: 'off' });
 const dflt = f => f.ty === 'sel' ? pair(f.o[f.d || 0])[0] : f.ty === 'chk' ? !!f.d : f.ty === 'range' ? (f.d || 90) : (f.d ?? '');
 const setDef = f => { const c = el[f.k]; if (f.ty === 'file') c.value = ''; else if (f.ty === 'chk') c.checked = dflt(f); else c.value = dflt(f); };
