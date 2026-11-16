@@ -290,11 +290,11 @@ module.exports = [
     },
     "a": {
      "en": "Encrypts text with a password using AES-256-GCM. The key is derived from your password with PBKDF2 (SHA-256, 600,000 iterations) and a random salt, and a random nonce is used for each encryption, so the same text gives a different result every time. Everything happens in your browser. If you lose the password, the text cannot be recovered. Use a long, unique password.",
-     "es": "Cifra texto con una contraseña usando AES-256-GCM. La clave se deriva de tu contraseña con PBKDF2 (SHA-256, 600 000 iteraciones) y una sal aleatoria, y cada cifrado usa un nonce aleatorio, por lo que el mismo texto da un resultado distinto cada vez. Todo ocurre en tu navegador. Si pierdes la contraseña, el texto no se puede recuperar. Usa una contraseña larga y única.",
-     "pt": "Criptografa texto com uma senha usando AES-256-GCM. A chave é derivada da sua senha com PBKDF2 (SHA-256, 600 000 iterações) e um sal aleatório, e cada criptografia usa um nonce aleatório, então o mesmo texto gera um resultado diferente a cada vez. Tudo acontece no seu navegador. Se você perder a senha, o texto não poderá ser recuperado. Use uma senha longa e única.",
+     "es": "Cifra texto con una contraseña usando AES-256-GCM. La clave se deriva de tu contraseña con PBKDF2 (SHA-256, 600.000 iteraciones) y una sal aleatoria, y cada cifrado usa un nonce aleatorio, por lo que el mismo texto da un resultado distinto cada vez. Todo ocurre en tu navegador. Si pierdes la contraseña, el texto no se puede recuperar. Usa una contraseña larga y única.",
+     "pt": "Criptografa texto com uma senha usando AES-256-GCM. A chave é derivada da sua senha com PBKDF2 (SHA-256, 600.000 iterações) e um sal aleatório, e cada criptografia usa um nonce aleatório, então o mesmo texto gera um resultado diferente a cada vez. Tudo acontece no seu navegador. Se você perder a senha, o texto não poderá ser recuperado. Use uma senha longa e única.",
      "id": "Mengenkripsi teks dengan kata sandi memakai AES-256-GCM. Kunci diturunkan dari kata sandi Anda dengan PBKDF2 (SHA-256, 600.000 iterasi) dan salt acak, dan setiap enkripsi memakai nonce acak, sehingga teks yang sama menghasilkan keluaran berbeda setiap kali. Semuanya terjadi di browser Anda. Jika kata sandi hilang, teks tidak dapat dipulihkan. Gunakan kata sandi yang panjang dan unik.",
      "hi": "पासवर्ड से AES-256-GCM का उपयोग करके टेक्स्ट को एन्क्रिप्ट करता है। कुंजी आपके पासवर्ड से PBKDF2 (SHA-256, 6,00,000 पुनरावृत्तियाँ) और एक यादृच्छिक सॉल्ट के साथ बनती है, और हर एन्क्रिप्शन में यादृच्छिक नॉन्स लगता है, इसलिए एक ही टेक्स्ट हर बार अलग परिणाम देता है। सब कुछ आपके ब्राउज़र में होता है। पासवर्ड खो जाने पर टेक्स्ट वापस नहीं पाया जा सकता। लंबा और अनूठा पासवर्ड उपयोग करें।",
-     "ar": "يشفّر النص بكلمة مرور باستخدام AES-256-GCM. يُشتق المفتاح من كلمة مرورك عبر PBKDF2 (SHA-256 و600000 تكرار) مع ملح عشوائي، ويُستخدم nonce عشوائي في كل تشفير، فيعطي النص نفسه ناتجًا مختلفًا في كل مرة. كل شيء يحدث داخل متصفحك. إذا فقدت كلمة المرور فلا يمكن استرجاع النص. استخدم كلمة مرور طويلة وفريدة."
+     "ar": "يشفّر النص بكلمة مرور باستخدام AES-256-GCM. يُشتق المفتاح من كلمة مرورك عبر PBKDF2 (SHA-256 و600,000 تكرار) مع ملح عشوائي، ويُستخدم nonce عشوائي في كل تشفير، فيعطي النص نفسه ناتجًا مختلفًا في كل مرة. كل شيء يحدث داخل متصفحك. إذا فقدت كلمة المرور فلا يمكن استرجاع النص. استخدم كلمة مرور طويلة وفريدة."
     }
    },
    {
@@ -335,10 +335,10 @@ module.exports = [
     "a": {
      "en": "Converts between millimetres, centimetres, metres, kilometres, inches, feet, yards, miles and nautical miles (nmi). Results use exact definitions, for example 1 inch = 25.4 mm and 1 mile = 1,609.344 m, and are shown with up to 10 significant digits.",
      "es": "Convierte entre milímetros, centímetros, metros, kilómetros, pulgadas, pies, yardas, millas y millas náuticas (nmi). Los resultados usan definiciones exactas, por ejemplo 1 pulgada = 25,4 mm y 1 milla = 1609,344 m, y se muestran con hasta 10 cifras significativas.",
-     "pt": "Converte entre milímetros, centímetros, metros, quilômetros, polegadas, pés, jardas, milhas e milhas náuticas (nmi). Os resultados usam definições exatas, por exemplo 1 polegada = 25,4 mm e 1 milha = 1609,344 m, e são exibidos com até 10 algarismos significativos.",
+     "pt": "Converte entre milímetros, centímetros, metros, quilômetros, polegadas, pés, jardas, milhas e milhas náuticas (nmi). Os resultados usam definições exatas, por exemplo 1 polegada = 25,4 mm e 1 milha = 1.609,344 m, e são exibidos com até 10 algarismos significativos.",
      "id": "Mengonversi antara milimeter, sentimeter, meter, kilometer, inci, kaki, yard, mil, dan mil laut (nmi). Hasil memakai definisi pasti, misalnya 1 inci = 25,4 mm dan 1 mil = 1.609,344 m, serta ditampilkan hingga 10 angka signifikan.",
      "hi": "मिलीमीटर, सेंटीमीटर, मीटर, किलोमीटर, इंच, फ़ुट, गज़, मील और नॉटिकल मील (nmi) के बीच बदलता है। परिणाम सटीक परिभाषाओं पर आधारित हैं, जैसे 1 इंच = 25.4 mm और 1 मील = 1,609.344 m, और अधिकतम 10 सार्थक अंकों तक दिखाए जाते हैं।",
-     "ar": "يحوّل بين الميليمترات والسنتيمترات والأمتار والكيلومترات والبوصات والأقدام والياردات والأميال والأميال البحرية (nmi). تعتمد النتائج على تعريفات دقيقة، مثل 1 بوصة = 25.4 مم و1 ميل = 1609.344 م، وتُعرض بما يصل إلى 10 أرقام معنوية."
+     "ar": "يحوّل بين الميليمترات والسنتيمترات والأمتار والكيلومترات والبوصات والأقدام والياردات والأميال والأميال البحرية (nmi). تعتمد النتائج على تعريفات دقيقة، مثل 1 بوصة = 25.4 مم و1 ميل = 1,609.344 م، وتُعرض بما يصل إلى 10 أرقام معنوية."
     }
    },
    {
@@ -429,11 +429,11 @@ module.exports = [
     },
     "a": {
      "en": "Converts between square millimetres, square centimetres, square metres, hectares, square kilometres, square inches, square feet, square yards, acres and square miles. One hectare is 10,000 m², and one acre is 4,046.8564224 m².",
-     "es": "Convierte entre milímetros cuadrados, centímetros cuadrados, metros cuadrados, hectáreas, kilómetros cuadrados, pulgadas cuadradas, pies cuadrados, yardas cuadradas, acres y millas cuadradas. Una hectárea son 10 000 m² y un acre son 4046,8564224 m².",
-     "pt": "Converte entre milímetros quadrados, centímetros quadrados, metros quadrados, hectares, quilômetros quadrados, polegadas quadradas, pés quadrados, jardas quadradas, acres e milhas quadradas. Um hectare são 10 000 m² e um acre são 4046,8564224 m².",
+     "es": "Convierte entre milímetros cuadrados, centímetros cuadrados, metros cuadrados, hectáreas, kilómetros cuadrados, pulgadas cuadradas, pies cuadrados, yardas cuadradas, acres y millas cuadradas. Una hectárea son 10.000 m² y un acre son 4046,8564224 m².",
+     "pt": "Converte entre milímetros quadrados, centímetros quadrados, metros quadrados, hectares, quilômetros quadrados, polegadas quadradas, pés quadrados, jardas quadradas, acres e milhas quadradas. Um hectare são 10.000 m² e um acre são 4.046,8564224 m².",
      "id": "Mengonversi antara milimeter persegi, sentimeter persegi, meter persegi, hektare, kilometer persegi, inci persegi, kaki persegi, yard persegi, acre, dan mil persegi. Satu hektare adalah 10.000 m² dan satu acre adalah 4.046,8564224 m².",
      "hi": "वर्ग मिलीमीटर, वर्ग सेंटीमीटर, वर्ग मीटर, हेक्टेयर, वर्ग किलोमीटर, वर्ग इंच, वर्ग फ़ुट, वर्ग गज़, एकड़ और वर्ग मील के बीच बदलता है। एक हेक्टेयर 10,000 m² और एक एकड़ 4,046.8564224 m² के बराबर है।",
-     "ar": "يحوّل بين المليمترات المربعة والسنتيمترات المربعة والأمتار المربعة والهكتارات والكيلومترات المربعة والبوصات المربعة والأقدام المربعة والياردات المربعة والأكرات والأميال المربعة. الهكتار الواحد يساوي 10000 م² والأكر الواحد يساوي 4046.8564224 م²."
+     "ar": "يحوّل بين المليمترات المربعة والسنتيمترات المربعة والأمتار المربعة والهكتارات والكيلومترات المربعة والبوصات المربعة والأقدام المربعة والياردات المربعة والأكرات والأميال المربعة. الهكتار الواحد يساوي 10,000 م² والأكر الواحد يساوي 4,046.8564224 م²."
     }
    },
    {
@@ -509,7 +509,7 @@ module.exports = [
      "pt": "Converte números de 1 a 3999 em números romanos e vice-versa. Digite algarismos para obter um número romano, ou digite um número romano como MCMXCIV para obter o número. Só a notação subtrativa padrão é aceita, então IIII não é válido, mas IV é.",
      "id": "Mengonversi angka 1 sampai 3.999 menjadi angka Romawi dan sebaliknya. Ketik angka untuk mendapatkan angka Romawi, atau ketik angka Romawi seperti MCMXCIV untuk mendapatkan angkanya. Hanya notasi pengurangan standar yang diterima, jadi IIII tidak valid tetapi IV valid.",
      "hi": "1 से 3,999 तक की संख्याओं को रोमन अंकों में और रोमन अंकों को वापस संख्या में बदलता है। रोमन अंक पाने के लिए अंक लिखें, या संख्या पाने के लिए MCMXCIV जैसा रोमन अंक लिखें। केवल मानक व्यवकलनात्मक संकेतन स्वीकार है, इसलिए IIII अमान्य है पर IV मान्य है।",
-     "ar": "يحوّل الأعداد من 1 إلى 3999 إلى أرقام رومانية والعكس. اكتب أرقامًا لتحصل على رقم روماني، أو اكتب رقمًا رومانيًا مثل MCMXCIV لتحصل على العدد. يُقبل التدوين الطرحي القياسي فقط، لذا IIII غير صالح بينما IV صالح."
+     "ar": "يحوّل الأعداد من 1 إلى 3,999 إلى أرقام رومانية والعكس. اكتب أرقامًا لتحصل على رقم روماني، أو اكتب رقمًا رومانيًا مثل MCMXCIV لتحصل على العدد. يُقبل التدوين الطرحي القياسي فقط، لذا IIII غير صالح بينما IV صالح."
     }
    },
    {

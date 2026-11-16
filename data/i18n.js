@@ -32,6 +32,7 @@ input:'Text|Texto|Texto|Teks|टेक्स्ट|النص',
 result:'Result|Resultado|Resultado|Hasil|परिणाम|النتيجة',
 copy:'Copy|Copiar|Copiar|Salin|कॉपी करें|نسخ',
 copied:'Copied|Copiado|Copiado|Tersalin|कॉपी हो गया|تم النسخ',
+donate:'Enjoying Celverter? Support us on Ko-fi|¿Te gusta Celverter? Apóyanos en Ko-fi|Gostou do Celverter? Apoie-nos no Ko-fi|Suka Celverter? Dukung kami di Ko-fi|Celverter पसंद आया? Ko-fi पर हमारा सहयोग करें|أعجبك Celverter؟ ادعمنا على Ko-fi',
 clear:'Clear|Borrar|Limpar|Hapus|साफ़ करें|مسح',
 download:'Download|Descargar|Baixar|Unduh|डाउनलोड|تنزيل',
 run:'Run|Ejecutar|Executar|Jalankan|चलाएँ|تشغيل',
@@ -113,7 +114,9 @@ ts:'Unix timestamp or date|Marca de tiempo Unix o fecha|Timestamp Unix ou data|T
 loc:'Local time|Hora local|Hora local|Waktu lokal|स्थानीय समय|التوقيت المحلي',
 rm:'Number or Roman numeral|Número o numeral romano|Número ou numeral romano|Angka atau angka Romawi|संख्या या रोमन अंक|عدد أو رقم روماني',
 errdec:'Wrong password or damaged data.|Contraseña incorrecta o datos dañados.|Senha incorreta ou dados danificados.|Kata sandi salah atau data rusak.|पासवर्ड गलत है या डेटा क्षतिग्रस्त है।|كلمة المرور خاطئة أو البيانات تالفة.',
-errc:'This feature needs a secure (HTTPS) connection.|Esta función necesita una conexión segura (HTTPS).|Este recurso precisa de uma conexão segura (HTTPS).|Fitur ini memerlukan koneksi aman (HTTPS).|इस सुविधा के लिए सुरक्षित (HTTPS) कनेक्शन चाहिए।|تحتاج هذه الميزة إلى اتصال آمن (HTTPS).'
+errc:'This feature needs a secure (HTTPS) connection.|Esta función necesita una conexión segura (HTTPS).|Este recurso precisa de uma conexão segura (HTTPS).|Fitur ini memerlukan koneksi aman (HTTPS).|इस सुविधा के लिए सुरक्षित (HTTPS) कनेक्शन चाहिए।|تحتاج هذه الميزة إلى اتصال آمن (HTTPS).',
+  steps:'How to use|Cómo usar|Como usar|Cara memakai|कैसे उपयोग करें|طريقة الاستخدام',
+  faq:'Frequently asked questions|Preguntas frecuentes|Perguntas frequentes|Pertanyaan umum|अक्सर पूछे जाने वाले प्रश्न|الأسئلة الشائعة'
 };
 const U = {};
 for (const k in R) {

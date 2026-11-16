@@ -15,13 +15,14 @@ Verify the domain, submit https://celverter.com/sitemap.xml, then request indexi
 ## Structure
 - `data/i18n.js` – language list and shared UI strings (six values per key: en|es|pt|id|hi|ar; the loader checks the count).
 - `data/tools.js` – every tool's name and About text in all six languages.
+- `data/content-a.js`, `data/content-b.js` (merged by `data/content.js`) – the "How to use" steps (3 per tool, shared by tool family) and FAQ (tool-specific questions plus one shared privacy question) in all six languages. They also produce FAQPage structured data.
 - `data/legal.js` – About, Privacy, Terms and Contact pages in all six languages.
 - `src/app.js` – tool logic (runs in the browser, no dependencies); `build.js` – static generator.
 
-The build stops with an error if a tool or legal page is missing text for any language.
+The build stops with an error if a tool is missing text, steps or FAQ for any language, or if a string does not have exactly six values.
 
 ## Extend
-- New tool: add it to `data/tools.js` (all six languages) and add an entry with the same id in `T` (src/app.js). UI labels go in `data/i18n.js`.
+- New tool: add it to `data/tools.js` and `data/content-a.js`/`content-b.js` (all six languages) and add an entry with the same id in `T` (src/app.js). UI labels go in `data/i18n.js`.
 - New language: add its code to `L`, `LN`, `OG` and one value per key in `data/i18n.js`, a block in `data/legal.js`, and its text for each tool in `data/tools.js`. The AI cleaner's chatbot phrases (OPEN/CLOSE in src/app.js) can be extended too.
 - Contact email is only a mailto link: use a real mailbox.
 - Favicon is SVG; add PNG/ICO (48px+) if you want maximum compatibility in search results.

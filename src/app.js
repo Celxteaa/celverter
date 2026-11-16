@@ -401,7 +401,8 @@ const sw = h('div', { className: 'sw', hidden: true });
 const dl = h('a', { className: 'btn alt', hidden: true }), cp = h('button', { className: 'btn alt', type: 'button', hidden: true }, I.copy), acts = h('div', { className: 'acts' });
 if (!tool.live) acts.append(h('button', { className: 'btn', type: 'submit' }, I[tool.btn || 'run']));
 acts.append(h('button', { className: 'btn alt', type: 'button', id: 'clr-btn' }, I.clear), cp, dl);
-root.replaceChildren(fl, acts, h('h2', { id: 'rt' }, I.result), sw, res);
+const kofi = h('p', { className: 'donate' }, h('a', { href: 'https://ko-fi.com/celverter', target: '_blank', rel: 'noopener noreferrer' }, '☕ ' + (I.donate || 'Support Celverter on Ko-fi')));
+root.replaceChildren(fl, acts, h('h2', { id: 'rt' }, I.result), sw, res, kofi);
 res.setAttribute('aria-labelledby', 'rt');
 
 let blobUrl = '', seq = 0;
