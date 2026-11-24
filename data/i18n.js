@@ -114,6 +114,7 @@ ts:'Unix timestamp or date|Marca de tiempo Unix o fecha|Timestamp Unix ou data|T
 loc:'Local time|Hora local|Hora local|Waktu lokal|स्थानीय समय|التوقيت المحلي',
 rm:'Number or Roman numeral|Número o numeral romano|Número ou numeral romano|Angka atau angka Romawi|संख्या या रोमन अंक|عدد أو رقم روماني',
 errdec:'Wrong password or damaged data.|Contraseña incorrecta o datos dañados.|Senha incorreta ou dados danificados.|Kata sandi salah atau data rusak.|पासवर्ड गलत है या डेटा क्षतिग्रस्त है।|كلمة المرور خاطئة أو البيانات تالفة.',
+big:'Text is too long (limit: 500000 characters).|El texto es demasiado largo (límite: 500000 caracteres).|O texto é muito longo (limite: 500000 caracteres).|Teks terlalu panjang (batas: 500000 karakter).|टेक्स्ट बहुत लंबा है (सीमा: 500000 वर्ण)।|النص طويل جدًا (الحد الأقصى: 500000 حرف).',
 errc:'This feature needs a secure (HTTPS) connection.|Esta función necesita una conexión segura (HTTPS).|Este recurso precisa de uma conexão segura (HTTPS).|Fitur ini memerlukan koneksi aman (HTTPS).|इस सुविधा के लिए सुरक्षित (HTTPS) कनेक्शन चाहिए।|تحتاج هذه الميزة إلى اتصال آمن (HTTPS).',
   steps:'How to use|Cómo usar|Como usar|Cara memakai|कैसे उपयोग करें|طريقة الاستخدام',
   faq:'Frequently asked questions|Preguntas frecuentes|Perguntas frequentes|Pertanyaan umum|अक्सर पूछे जाने वाले प्रश्न|الأسئلة الشائعة'

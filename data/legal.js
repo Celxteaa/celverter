@@ -2,7 +2,6 @@
 /* Legal pages in every site language. Returns { [lang]: { about, privacy, terms, contact } } as HTML. */
 module.exports = ({ MAIL, DAY }) => {
   const m = `<a href="mailto:${MAIL}">${MAIL}</a>`;
-  const U1 = 'https://policies.google.com/technologies/ads', U2 = 'https://adssettings.google.com';
   const a = (u, s) => `<a href="${u}" rel="noopener">${s}</a>`;
   const sec = list => list.map(([h, p]) => `<h2>${h}</h2><p>${p}</p>`).join('');
   const paras = list => list.map(p => `<p>${p}</p>`).join('');
@@ -17,7 +16,6 @@ module.exports = ({ MAIL, DAY }) => {
         ['What we process', `The tools run inside your browser. The text, numbers, passwords and files you enter are not sent to our servers and are not stored by us.`],
         ['Server logs', `Our hosting provider may keep standard server logs (such as IP address, browser type and requested page) for security and troubleshooting.`],
         ['Data on your device', `When you choose a language we save that choice in your browser's local storage (key "lg") so the site can open in your language next time. You can clear it in your browser settings.`],
-        ['Advertising', `If ads are enabled, they are served by Google AdSense. Google and its partners may use cookies or similar identifiers to show and measure ads. See ${a(U1, 'how Google uses data')} and manage ad personalisation in ${a(U2, 'Google Ads Settings')}.`],
         ['Children', `Celverter is not directed at children under 13.`],
         ['Contact', `Questions about this policy: ${m}.`]],
       terms: [
@@ -38,7 +36,6 @@ module.exports = ({ MAIL, DAY }) => {
         ['Qué tratamos', `Las herramientas se ejecutan dentro de tu navegador. El texto, los números, las contraseñas y los archivos que introduces no se envían a nuestros servidores ni los almacenamos.`],
         ['Registros del servidor', `Nuestro proveedor de alojamiento puede conservar registros estándar del servidor (como la dirección IP, el tipo de navegador y la página solicitada) por seguridad y para resolver problemas.`],
         ['Datos en tu dispositivo', `Cuando eliges un idioma, guardamos esa elección en el almacenamiento local de tu navegador (clave "lg") para que el sitio se abra en tu idioma la próxima vez. Puedes borrarla en los ajustes del navegador.`],
-        ['Publicidad', `Si los anuncios están activados, los muestra Google AdSense. Google y sus socios pueden usar cookies o identificadores similares para mostrar y medir anuncios. Consulta ${a(U1, 'cómo usa Google los datos')} y gestiona la personalización de anuncios en ${a(U2, 'la configuración de anuncios de Google')}.`],
         ['Menores', `Celverter no está dirigido a menores de 13 años.`],
         ['Contacto', `Preguntas sobre esta política: ${m}.`]],
       terms: [
@@ -59,7 +56,6 @@ module.exports = ({ MAIL, DAY }) => {
         ['O que processamos', `As ferramentas são executadas dentro do seu navegador. O texto, os números, as senhas e os arquivos que você informa não são enviados aos nossos servidores nem armazenados por nós.`],
         ['Registros do servidor', `Nosso provedor de hospedagem pode manter registros padrão do servidor (como endereço IP, tipo de navegador e página solicitada) para segurança e solução de problemas.`],
         ['Dados no seu dispositivo', `Quando você escolhe um idioma, salvamos essa escolha no armazenamento local do navegador (chave "lg") para que o site abra no seu idioma da próxima vez. Você pode apagá-la nas configurações do navegador.`],
-        ['Publicidade', `Se os anúncios estiverem ativados, eles são exibidos pelo Google AdSense. O Google e seus parceiros podem usar cookies ou identificadores semelhantes para exibir e medir anúncios. Veja ${a(U1, 'como o Google usa dados')} e gerencie a personalização de anúncios nas ${a(U2, 'Configurações de anúncios do Google')}.`],
         ['Crianças', `O Celverter não é direcionado a crianças menores de 13 anos.`],
         ['Contato', `Dúvidas sobre esta política: ${m}.`]],
       terms: [
@@ -80,7 +76,6 @@ module.exports = ({ MAIL, DAY }) => {
         ['Yang kami proses', `Alat berjalan di dalam browser Anda. Teks, angka, kata sandi, dan berkas yang Anda masukkan tidak dikirim ke server kami dan tidak kami simpan.`],
         ['Log server', `Penyedia hosting kami dapat menyimpan log server standar (misalnya alamat IP, jenis browser, dan halaman yang diminta) untuk keamanan dan pemecahan masalah.`],
         ['Data di perangkat Anda', `Saat Anda memilih bahasa, pilihan itu disimpan di penyimpanan lokal browser (kunci "lg") agar situs terbuka dalam bahasa Anda berikutnya. Anda dapat menghapusnya lewat pengaturan browser.`],
-        ['Iklan', `Jika iklan diaktifkan, iklan ditayangkan oleh Google AdSense. Google dan mitranya dapat memakai cookie atau pengenal serupa untuk menampilkan dan mengukur iklan. Lihat ${a(U1, 'cara Google menggunakan data')} dan atur personalisasi iklan di ${a(U2, 'Setelan Iklan Google')}.`],
         ['Anak-anak', `Celverter tidak ditujukan untuk anak di bawah 13 tahun.`],
         ['Kontak', `Pertanyaan tentang kebijakan ini: ${m}.`]],
       terms: [
@@ -101,7 +96,6 @@ module.exports = ({ MAIL, DAY }) => {
         ['हम क्या प्रोसेस करते हैं', `टूल आपके ब्राउज़र के भीतर चलते हैं। आपके दर्ज किए गए टेक्स्ट, संख्याएँ, पासवर्ड और फ़ाइलें हमारे सर्वर पर नहीं भेजी जातीं और हम उन्हें सहेजते नहीं हैं।`],
         ['सर्वर लॉग', `हमारा होस्टिंग प्रदाता सुरक्षा और समस्या-निवारण के लिए मानक सर्वर लॉग (जैसे IP पता, ब्राउज़र का प्रकार और माँगा गया पेज) रख सकता है।`],
         ['आपके डिवाइस पर डेटा', `जब आप कोई भाषा चुनते हैं तो हम वह चुनाव आपके ब्राउज़र के लोकल स्टोरेज (कुंजी "lg") में सहेजते हैं ताकि अगली बार साइट आपकी भाषा में खुले। आप इसे ब्राउज़र सेटिंग्स से मिटा सकते हैं।`],
-        ['विज्ञापन', `यदि विज्ञापन चालू हैं, तो वे Google AdSense द्वारा दिखाए जाते हैं। Google और उसके भागीदार विज्ञापन दिखाने और मापने के लिए कुकी या समान पहचानकर्ता उपयोग कर सकते हैं। देखें ${a(U1, 'Google डेटा का उपयोग कैसे करता है')} और ${a(U2, 'Google विज्ञापन सेटिंग्स')} में विज्ञापन वैयक्तिकरण प्रबंधित करें।`],
         ['बच्चे', `Celverter 13 वर्ष से कम उम्र के बच्चों के लिए नहीं है।`],
         ['संपर्क', `इस नीति के बारे में प्रश्न: ${m}।`]],
       terms: [
@@ -122,7 +116,6 @@ module.exports = ({ MAIL, DAY }) => {
         ['ما الذي نعالجه', `تعمل الأدوات داخل متصفحك. لا تُرسل النصوص والأعداد وكلمات المرور والملفات التي تدخلها إلى خوادمنا ولا نخزّنها.`],
         ['سجلات الخادم', `قد يحتفظ مزوّد الاستضافة لدينا بسجلات خادم قياسية (مثل عنوان IP ونوع المتصفح والصفحة المطلوبة) لأغراض الأمان وإصلاح الأعطال.`],
         ['البيانات على جهازك', `عند اختيارك لغة نحفظ هذا الاختيار في التخزين المحلي لمتصفحك (المفتاح "lg") ليفتح الموقع بلغتك في المرة القادمة. يمكنك مسحه من إعدادات المتصفح.`],
-        ['الإعلانات', `إذا كانت الإعلانات مفعّلة فإنها تُعرض عبر Google AdSense. قد تستخدم Google وشركاؤها ملفات تعريف الارتباط أو معرّفات مشابهة لعرض الإعلانات وقياسها. اطّلع على ${a(U1, 'كيف تستخدم Google البيانات')} وأدِر تخصيص الإعلانات في ${a(U2, 'إعدادات إعلانات Google')}.`],
         ['الأطفال', `Celverter غير موجّه إلى الأطفال دون 13 عامًا.`],
         ['التواصل', `للاستفسار عن هذه السياسة: ${m}.`]],
       terms: [
