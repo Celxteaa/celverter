@@ -5,8 +5,8 @@ Static site generator + tiny Node server. No runtime dependencies (Node 18+).
     node server.js            # or upload dist/ to any static host (Netlify/Cloudflare read dist/_headers)
 
 ## Monetag
-Ads are off until you set `MONETAG_SRC` (the tag script URL from your Monetag dashboard). The build then adds `<script async src=MONETAG_SRC data-zone=MONETAG_ZONE data-cfasync="false">` to every page and relaxes the CSP so Monetag can load its scripts and frames.
-Env: `MONETAG_SRC`, `MONETAG_ZONE` (zone id), `MONETAG_META` (optional verification meta content), `MONETAG_ADS_TXT` (optional ads.txt line; use `\n` for line breaks). Leave `MONETAG_SRC` empty to disable ads and rebuild.
+Ads are on by default. The build adds four Monetag tags to the `<head>` of every page (zones 12337826, 12337820, 12337799, 314779; the middle two come from `assets/mt.js`), writes `sw.js` to the site root (source: `src/sw.js`) and relaxes the CSP so Monetag can load its scripts and frames. Build with `ADS=off node build.js` to leave the tags out.
+Optional env: `MONETAG_META` (verification meta content), `MONETAG_ADS_TXT` (ads.txt line; use `\n` for line breaks).
 
 ## Search Console
 Verify the domain, submit https://celverter.com/sitemap.xml, then request indexing for the home page.
