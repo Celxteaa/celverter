@@ -111,4 +111,6 @@ W('404.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta 
 W('_headers', `/*\n  Content-Security-Policy: ${CSP}\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()\n  Cross-Origin-Opener-Policy: same-origin\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\n\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n`);
 fs.mkdirSync(OUT + '/assets', { recursive: true });
 for (const f of ['style.css', 'app.js', 'lang.js', 'stats.js']) fs.copyFileSync('src/' + f, OUT + '/assets/' + f);
+/* Monetag service worker must live at the site root */
+if (fs.existsSync('src/sw.js')) fs.copyFileSync('src/sw.js', OUT + '/sw.js');
 console.log('tools:', C.reduce((a, c) => a + c.tools.length, 0), '| pages:', up.length * L.length, '| sitemap urls:', up.length * L.length);
