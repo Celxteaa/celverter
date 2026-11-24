@@ -1,12 +1,14 @@
 'use strict';
 /* Static site generator for Celverter. Usage: node build.js
-   Env: SITE, ADSENSE_CLIENT (default ca-pub-2825174737543657; set empty to disable), ADSENSE_SLOT, CONTACT_EMAIL */
-const fs = require('fs'), path = require('path');
+   Env: SITE, CONTACT_EMAIL, MONETAG_SRC (tag script URL from Monetag), MONETAG_ZONE (zone id), MONETAG_META (optional site-verification content), MONETAG_ADS_TXT (optional ads.txt line). Leave MONETAG_SRC empty to disable ads. */
+const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const SITE = (process.env.SITE || 'https://celverter.com').replace(/\/$/, '');
-const AD = process.env.ADSENSE_CLIENT ?? 'ca-pub-2825174737543657', SLOT = process.env.ADSENSE_SLOT || '', MAIL = process.env.CONTACT_EMAIL || 'celxtea@proton.me';
+const AD = process.env.MONETAG_SRC || '', ZONE = process.env.MONETAG_ZONE || '', MTMETA = process.env.MONETAG_META || '', MTADS = process.env.MONETAG_ADS_TXT || '', MAIL = process.env.CONTACT_EMAIL || 'celxtea@proton.me';
 const { L, LN, OG, RTL, t } = require('./data/i18n');
 const C = require('./data/tools');
 const CONTENT = require('./data/content');
+/* asset version = hash of the files, so browsers re-download only when they actually changed */
+const V = crypto.createHash('sha1').update(['style.css', 'app.js', 'lang.js', 'stats.js'].map(f => fs.readFileSync('src/' + f, 'utf8')).join('\n')).digest('hex').slice(0, 10);
 const DAY = new Date().toISOString().slice(0, 10), YEAR = new Date().getFullYear(), OUT = 'dist';
 const LG = require('./data/legal')({ MAIL, DAY });
 
@@ -29,23 +31,21 @@ const stepsOf = (id, l) => CONTENT[id].steps.map(s => s[L.indexOf(l)]);
 const faqOf = (id, l) => CONTENT[id].faq.map(([q, a]) => [q[L.indexOf(l)], a[L.indexOf(l)]]);
 const faqLD = (id, l) => ({ '@type': 'FAQPage', mainEntity: faqOf(id, l).map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) });
 const LOGO = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="9" fill="#3b3bdb"/><path d="M20.5 11.2A7.4 7.4 0 1 0 20.5 20.8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/><rect x="20" y="13.5" width="5" height="5" rx="1" transform="rotate(45 22.5 16)" fill="#f2b134"/></svg>';
-const ad = l => AD && SLOT
-  ? `<aside class="ad" data-l="${esc(t(l, 'ad'))}"><ins class="adsbygoogle" style="display:block" data-ad-client="${esc(AD)}" data-ad-slot="${esc(SLOT)}" data-ad-format="auto" data-full-width-responsive="true"></ins></aside>`
-  : '<aside class="ad"></aside>';
+const ad = l => '<aside class="ad"></aside>';
 const cats = l => C.map(c => ({ slug: c.slug, k: c.k, name: t(l, c.k), desc: t(l, 'd_' + c.k), tools: c.tools }));
 const tile = (l, c, x) => `<li><a class="tile c-${c.k}" data-n="${esc(x.n[l].toLowerCase())}" href="${url(l, c.slug + '/' + x.id + '/')}">${esc(x.n[l])}</a></li>`;
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'" + (AD ? ' https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://www.googletagservices.com https://adservice.google.com' : ''),
+  "script-src 'self'" + (AD ? ' https:' : ''),
   "style-src 'self'" + (AD ? " 'unsafe-inline'" : ''),
   "img-src 'self' data: blob:" + (AD ? ' https:' : ''),
-  "connect-src 'self'" + (AD ? ' https://pagead2.googlesyndication.com https://*.google.com https://*.doubleclick.net' : ''),
+  "connect-src 'self'" + (AD ? ' https:' : ''),
   "font-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'"
-].concat(AD ? ['frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com'] : []).concat(['upgrade-insecure-requests']).join('; ');
+].concat(AD ? ['frame-src https:'] : []).concat(['upgrade-insecure-requests']).join('; ');
 
 /* ---------- page shell ---------- */
-function page({ l, path: pth, title, desc, body, ld = '', kw = '', home, ui = null }) {
+function page({ l, path: pth, title, desc, body, ld = '', kw = '', home, ui = null, script = '' }) {
   const alt = L.map(x => `<link rel="alternate" hreflang="${x}" href="${SITE}${url(x, pth)}">`).join('') + `<link rel="alternate" hreflang="x-default" href="${SITE}${url('en', pth)}">`;
   const cu = SITE + url(l, pth);
   const dd = cats(l).map(c => `<div class="dd"><a href="${url(l, c.slug + '/')}">${esc(c.name)}</a><button type="button" aria-expanded="false" aria-controls="m-${c.slug}" aria-label="${esc(c.name)}">▾</button><ul id="m-${c.slug}" hidden>${c.tools.map(x => `<li><a href="${url(l, c.slug + '/' + x.id + '/')}">${esc(x.n[l])}</a></li>`).join('')}</ul></div>`).join('');
@@ -53,7 +53,7 @@ function page({ l, path: pth, title, desc, body, ld = '', kw = '', home, ui = nu
   const ft = cats(l).map(c => `<div><h2>${esc(c.name)}</h2><ul>${c.tools.map(x => `<li><a href="${url(l, c.slug + '/' + x.id + '/')}">${esc(x.n[l])}</a></li>`).join('')}</ul></div>`).join('')
     + `<div><h2>Celverter</h2><ul>${['about', 'privacy', 'terms', 'contact'].map(k => `<li><a href="${url(l, k + '/')}">${esc(t(l, k === 'privacy' ? 'priv' : k))}</a></li>`).join('')}</ul></div>`;
   const i18n = JSON.stringify({ ...Object.fromEntries(Object.keys(require('./data/i18n').U).map(k => [k, t(l, k)])), ...Object.fromEntries(Object.entries(ui || {}).map(([k, v]) => [k, v.split('|')[L.indexOf(l)]])) }).replace(/</g, '\\u003c');
-  return `<!doctype html><html lang="${l}" dir="${RTL.has(l) ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${AD ? `<meta name="google-adsense-account" content="${esc(AD)}">` : ''}<title>${esc(title)}</title><meta name="description" content="${esc(desc)}">${kw ? `<meta name="keywords" content="${esc(kw)}">` : ''}<meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="${cu}">${alt}<meta name="theme-color" content="#3b3bdb"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="manifest" href="/manifest.webmanifest"><meta property="og:type" content="website"><meta property="og:site_name" content="Celverter"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${cu}"><meta property="og:locale" content="${OG[l]}"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/assets/style.css?v=${DAY}">${home && l === 'en' ? `<script src="/assets/lang.js?v=${DAY}"></script>` : ''}${AD ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${esc(AD)}" crossorigin="anonymous"></script>` : ''}${ld}</head><body><a class="skip" href="#main">${esc(t(l, 'skip'))}</a><header class="top"><div class="wrap bar"><a class="brand" href="${url(l)}" aria-label="Celverter">${LOGO}<span>celverter</span></a><button class="burger" type="button" aria-expanded="false" aria-controls="nav">${esc(t(l, 'menu'))}</button><nav id="nav" aria-label="${esc(t(l, 'menu'))}">${dd}${lg}</nav></div></header><main id="main" tabindex="-1">${body}</main><footer><div class="wrap"><div class="fgrid">${ft}</div><p class="copy">© ${YEAR} Celverter.</p></div></footer><script type="application/json" id="i">${i18n}</script><script src="/assets/app.js?v=${DAY}" defer></script>${AD && SLOT ? `<script src="/assets/ads.js?v=${DAY}" defer></script>` : ''}</body></html>`;
+  return `<!doctype html><html lang="${l}" dir="${RTL.has(l) ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${MTMETA ? `<meta name="monetag" content="${esc(MTMETA)}">` : ''}<title>${esc(title)}</title><meta name="description" content="${esc(desc)}">${kw ? `<meta name="keywords" content="${esc(kw)}">` : ''}<meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="${cu}">${alt}<meta name="theme-color" content="#3b3bdb"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="manifest" href="/manifest.webmanifest"><meta property="og:type" content="website"><meta property="og:site_name" content="Celverter"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${cu}"><meta property="og:locale" content="${OG[l]}"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="/assets/style.css?v=${V}">${home && l === 'en' ? `<script src="/assets/lang.js?v=${V}"></script>` : ''}${AD ? `<script async src="${esc(AD)}"${ZONE ? ` data-zone="${esc(ZONE)}"` : ''} data-cfasync="false"></script>` : ''}${ld}</head><body><a class="skip" href="#main">${esc(t(l, 'skip'))}</a><header class="top"><div class="wrap bar"><a class="brand" href="${url(l)}" aria-label="Celverter">${LOGO}<span>celverter</span></a><button class="burger" type="button" aria-expanded="false" aria-controls="nav">${esc(t(l, 'menu'))}</button><nav id="nav" aria-label="${esc(t(l, 'menu'))}">${dd}${lg}</nav></div></header><main id="main" tabindex="-1">${body}</main><footer><div class="wrap"><div class="fgrid">${ft}</div><p class="copy">© ${YEAR} Celverter.</p></div></footer><script type="application/json" id="i">${i18n}</script><script src="/assets/app.js?v=${V}" defer></script>${script ? `<script src="/assets/${script}?v=${V}" defer></script>` : ''}</body></html>`;
 }
 const crumbs = a => `<nav class="crumbs" aria-label="Breadcrumb"><ol>${a.map((x, i) => i < a.length - 1 ? `<li><a href="${x[1]}">${esc(x[0])}</a></li>` : `<li aria-current="page">${esc(x[0])}</li>`).join('')}</ol></nav>`;
 const crumbLD = a => ({ '@type': 'BreadcrumbList', itemListElement: a.map((x, i) => ({ '@type': 'ListItem', position: i + 1, name: x[0], item: SITE + x[1] })) });
@@ -84,7 +84,7 @@ for (const l of L) {
       const n = x.n[l], tp = cp + x.id + '/', cr2 = [...cr, [n, url(l, tp)]], ab = x.a[l];
       paths.push(tp);
       W(pre + tp + 'index.html', page({
-        l, path: tp, ui: x.ui, title: `${n} – Celverter`, desc: firstSentence(ab).slice(0, 300), kw: `${n}, ${c.name}, Celverter`,
+        l, path: tp, ui: x.ui, script: x.script, title: `${n} – Celverter`, desc: firstSentence(ab).slice(0, 300), kw: `${n}, ${c.name}, Celverter`,
         ld: jld({ '@context': 'https://schema.org', '@graph': [{ '@type': 'WebApplication', name: n, url: SITE + url(l, tp), description: firstSentence(ab), applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript', inLanguage: l, offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } }, crumbLD(cr2), faqLD(x.id, l)] }),
         body: `<div class="wrap">${crumbs(cr2)}<h1>${esc(n)}</h1><p class="lead">${esc(t(l, 'sub'))}</p><section class="tool" data-tool="${x.id}" aria-label="${esc(n)}"><div id="ui"><noscript>${esc(t(l, 'needjs'))}</noscript></div><p class="note">${esc(t(l, 'local'))}</p></section>${ad(l)}<section class="prose"><h2>${esc(t(l, 'steps'))}</h2><ol class="steps">${stepsOf(x.id, l).map(s => `<li>${esc(s)}</li>`).join('')}</ol><h2>${esc(t(l, 'how'))}</h2><p>${esc(ab)}</p><h2>${esc(t(l, 'faq'))}</h2>${faqOf(x.id, l).map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')}</section><section><h2>${esc(t(l, 'related'))}</h2><ul class="grid">${c.tools.filter(y => y !== x).map(y => tile(l, c, y)).join('')}</ul></section></div>`
       }));
@@ -102,13 +102,13 @@ for (const l of L) {
 const up = [...new Set(paths)];
 W('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n` + up.flatMap(p => L.map(l => `<url><loc>${SITE}${url(l, p)}</loc><lastmod>${DAY}</lastmod>${L.map(x => `<xhtml:link rel="alternate" hreflang="${x}" href="${SITE}${url(x, p)}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${SITE}${url('en', p)}"/></url>`)).join('\n') + '\n</urlset>\n');
 W('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
-if (AD) W('ads.txt', `google.com, ${AD.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`);
+if (MTADS) W('ads.txt', MTADS.replace(/\\n/g, '\n').trim() + '\n');
 W('favicon.svg', LOGO.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ').replace(' aria-hidden="true" focusable="false"', ''));
 W('manifest.webmanifest', JSON.stringify({ name: 'Celverter', short_name: 'Celverter', start_url: '/', display: 'standalone', background_color: '#f6f7fc', theme_color: '#3b3bdb', icons: [{ src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] }));
 /* 404 is shared by every language, so it says "page not found" in all of them */
 const nf = { en: 'Page not found.', es: 'Página no encontrada.', pt: 'Página não encontrada.', id: 'Halaman tidak ditemukan.', hi: 'पेज नहीं मिला।', ar: 'الصفحة غير موجودة.' };
-W('404.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>404 – Celverter</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css?v=${DAY}"></head><body><main class="wrap"><h1>404</h1>${L.map(l => `<p class="lead" lang="${l}" dir="${RTL.has(l) ? 'rtl' : 'ltr'}"><a href="${url(l)}">${esc(nf[l])}</a></p>`).join('')}</main></body></html>`);
-W('_headers', `/*\n  Content-Security-Policy: ${CSP}\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()\n  Cross-Origin-Opener-Policy: same-origin\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\n`);
+W('404.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>404 – Celverter</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css?v=${V}"></head><body><main class="wrap"><h1>404</h1>${L.map(l => `<p class="lead" lang="${l}" dir="${RTL.has(l) ? 'rtl' : 'ltr'}"><a href="${url(l)}">${esc(nf[l])}</a></p>`).join('')}</main></body></html>`);
+W('_headers', `/*\n  Content-Security-Policy: ${CSP}\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()\n  Cross-Origin-Opener-Policy: same-origin\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\n\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n`);
 fs.mkdirSync(OUT + '/assets', { recursive: true });
-for (const f of ['style.css', 'app.js', 'lang.js', 'ads.js']) fs.copyFileSync('src/' + f, OUT + '/assets/' + f);
+for (const f of ['style.css', 'app.js', 'lang.js', 'stats.js']) fs.copyFileSync('src/' + f, OUT + '/assets/' + f);
 console.log('tools:', C.reduce((a, c) => a + c.tools.length, 0), '| pages:', up.length * L.length, '| sitemap urls:', up.length * L.length);

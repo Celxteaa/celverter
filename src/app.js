@@ -73,12 +73,17 @@ const csv = s => {
 };
 
 const img = async (f, w, hh, type, qu) => {
-  const bm = await createImageBitmap(f), W = w || bm.width, H = hh || bm.height;
-  if (!(W > 0 && H > 0 && W <= 8000 && H <= 8000)) bad();
-  const c = d.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d');
-  if (type === 'image/jpeg') { x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); }
-  x.drawImage(bm, 0, 0, W, H);
+  const bm = await createImageBitmap(f);
+  try {
+    const W = w || bm.width, H = hh || bm.height;
+    /* 16.7 MP is the canvas area limit of iOS Safari; bigger canvases come back blank there */
+    if (!(W > 0 && H > 0 && W <= 8000 && H <= 8000 && W * H <= 16777216 && bm.width * bm.height <= 1e8)) bad();
+    var c = d.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    if (type === 'image/jpeg') { x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); }
+    x.drawImage(bm, 0, 0, W, H);
+  } finally { bm.close(); }
+  const W = c.width, H = c.height;
   const b = await new Promise(r => c.toBlob(r, type, qu));
   if (!b) bad();
   return { t: `${W}×${H} · ${nf(b.size / 1024, 1)} KB`, b, n: 'celverter.' + ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[type]) };
@@ -214,17 +219,17 @@ const trimEnds = (s, pats, last) => {
 };
 const clean = (src, o) => {
   let s = src.replace(/\r\n?/g, '\n');
-  if (o.c_ref) s = s.replace(/\uE200[^\uE201]*\uE201/g, '').replace(/[\uE000-\uF8FF]/g, '').replace(/【[^】]*】/g, '')
+  if (o.c_ref) s = s.replace(/\uE200[^\uE201]{0,500}\uE201/g, '').replace(/[\uE000-\uF8FF]/g, '').replace(/【[^】]*】/g, '')
     .replace(/:contentReference\[oaicite:\d+\]\{index=\d+\}/g, '').replace(/\[oaicite:\d+\]/g, '')
     .replace(/(?<=[\p{L}\p{N}.,;:!?)"”'’])\[\d{1,3}(?:\s*[-–,]\s*\d{1,3})*\](?=[\s.,;:!?)"”'’]|$)/gu, '');
   if (o.c_md) {
     s = s.replace(/^```[^\n]*$/gm, '')
       .replace(/^[ \t]*([-*_])([ \t]*\1){2,}[ \t]*$/gm, '')
-      .replace(/^[ \t]*\|?[ \t]*:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*$/gm, '')
+      .replace(/^[ \t]*(?:\|[ \t]*)?:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*$/gm, '')
       .replace(/^[ \t]*\|(.*)\|[ \t]*$/gm, (m, c) => c.split('|').map(x => x.trim()).join('\t'))
       .replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '').replace(/^[ \t]{0,3}>[ \t]?/gm, '').replace(/^[ \t]*[-*+•][ \t]+/gm, '')
-      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-      .replace(/(\*\*|__)(?=\S)([\s\S]+?)(?<=\S)\1/g, '$2')
+      .replace(/!?\[([^\]]{0,1000})\]\([^)]{0,2000}\)/g, '$1')
+      .replace(/(\*\*|__)(?=\S)([\s\S]{1,1000}?)(?<=\S)\1/g, '$2')
       .replace(/(^|[\s(])\*(?!\s)([^*\n]+?)\*(?=[\s).,;:!?]|$)/gm, '$1$2')
       .replace(/(^|[\s(])_(?!\s)([^_\n]+?)_(?=[\s).,;:!?]|$)/gm, '$1$2')
       .replace(/`([^`\n]+)`/g, '$1');
@@ -275,6 +280,134 @@ const ROMAN = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [9
 const RX = /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
 const toRoman = n => ROMAN.reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
 const fromRoman = r => ROMAN.reduce((acc, [v, sym]) => { while (acc.s.startsWith(sym)) { acc.n += v; acc.s = acc.s.slice(sym.length); } return acc; }, { n: 0, s: r }).n;
+/* ---------- number to words (pure functions, no DOM; used by the Number to Words tool) ---------- */
+/* N2W-START */
+const N2W = (() => {
+  const groups = n => { const g = []; for (let m = n; m > 0; m = Math.floor(m / 1000)) g.push(m % 1000); return g; };
+  const join = a => a.filter(Boolean).join(' ');
+  /* English (short scale; optional British "and") */
+  const EN1 = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
+  const EN10 = 'x x twenty thirty forty fifty sixty seventy eighty ninety'.split(' ');
+  const en100 = r => r < 20 ? EN1[r] : EN10[Math.floor(r / 10)] + (r % 10 ? '-' + EN1[r % 10] : '');
+  const en1000 = (g, brit) => { const h = Math.floor(g / 100), r = g % 100; return join([h ? EN1[h] + ' hundred' : '', r ? (h && brit ? 'and ' : '') + en100(r) : '']); };
+  const enWords = (n, o) => {
+    if (n === 0) return 'zero';
+    const gs = groups(n), SC = ['', ' thousand', ' million', ' billion', ' trillion'], out = [];
+    for (let i = gs.length - 1; i >= 0; i--) if (gs[i]) out.push((i === 0 && o.brit && gs.length > 1 && gs[0] < 100 ? 'and ' : '') + en1000(gs[i], o.brit) + SC[i]);
+    return out.join(' ');
+  };
+  /* Indonesian */
+  const ID1 = 'nol satu dua tiga empat lima enam tujuh delapan sembilan'.split(' ');
+  const id100 = r => r < 10 ? ID1[r] : r === 10 ? 'sepuluh' : r === 11 ? 'sebelas' : r < 20 ? ID1[r - 10] + ' belas' : ID1[Math.floor(r / 10)] + ' puluh' + (r % 10 ? ' ' + ID1[r % 10] : '');
+  const id1000 = g => { const h = Math.floor(g / 100), r = g % 100; return join([h === 1 ? 'seratus' : h ? ID1[h] + ' ratus' : '', r ? id100(r) : '']); };
+  const idWords = n => {
+    if (n === 0) return 'nol';
+    const gs = groups(n), SC = ['', 'ribu', 'juta', 'miliar', 'triliun'], out = [];
+    for (let i = gs.length - 1; i >= 0; i--) if (gs[i]) out.push(i === 1 && gs[i] === 1 ? 'seribu' : join([id1000(gs[i]), SC[i]]));
+    return out.join(' ');
+  };
+  /* Spanish (long scale: mil millones, billón) */
+  const ES1 = 'cero uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince dieciséis diecisiete dieciocho diecinueve veinte veintiuno veintidós veintitrés veinticuatro veinticinco veintiséis veintisiete veintiocho veintinueve'.split(' ');
+  const ES10 = 'x x x treinta cuarenta cincuenta sesenta setenta ochenta noventa'.split(' ');
+  const ES100 = 'x x doscientos trescientos cuatrocientos quinientos seiscientos setecientos ochocientos novecientos'.split(' ');
+  const es100 = r => r < 30 ? ES1[r] : ES10[Math.floor(r / 10)] + (r % 10 ? ' y ' + ES1[r % 10] : '');
+  const es1000 = g => { const h = Math.floor(g / 100), r = g % 100; return join([h === 1 ? (r ? 'ciento' : 'cien') : h ? ES100[h] : '', r ? es100(r) : '']); };
+  const esApoc = s => s.replace(/veintiuno$/, 'veintiún').replace(/uno$/, 'un');
+  const es6 = c => { const th = Math.floor(c / 1000), r = c % 1000; return join([th ? (th === 1 ? 'mil' : esApoc(es1000(th)) + ' mil') : '', r ? es1000(r) : '']); };
+  const esWords = n => {
+    if (n === 0) return 'cero';
+    const c = [n % 1e6, Math.floor(n / 1e6) % 1e6, Math.floor(n / 1e12)], out = [];
+    if (c[2]) out.push(c[2] === 1 ? 'un billón' : esApoc(es6(c[2])) + ' billones');
+    if (c[1]) out.push(c[1] === 1 ? 'un millón' : esApoc(es6(c[1])) + ' millones');
+    if (c[0]) out.push(es6(c[0]));
+    return out.join(' ');
+  };
+  /* Portuguese (Brazilian usage: bilhão = 1 000 000 000); "e" joins the last group when it is under 100 or a round hundred */
+  const PT1 = 'zero um dois três quatro cinco seis sete oito nove dez onze doze treze quatorze quinze dezesseis dezessete dezoito dezenove'.split(' ');
+  const PT10 = 'x x vinte trinta quarenta cinquenta sessenta setenta oitenta noventa'.split(' ');
+  const PT100 = 'x x duzentos trezentos quatrocentos quinhentos seiscentos setecentos oitocentos novecentos'.split(' ');
+  const pt100 = r => r < 20 ? PT1[r] : PT10[Math.floor(r / 10)] + (r % 10 ? ' e ' + PT1[r % 10] : '');
+  const pt1000 = g => { const h = Math.floor(g / 100), r = g % 100; return [h === 1 ? (r ? 'cento' : 'cem') : h ? PT100[h] : '', r ? pt100(r) : ''].filter(Boolean).join(' e '); };
+  const ptWords = n => {
+    if (n === 0) return 'zero';
+    const gs = groups(n), SC = [['', ''], ['mil', 'mil'], ['milhão', 'milhões'], ['bilhão', 'bilhões'], ['trilhão', 'trilhões']], idx = [];
+    for (let i = gs.length - 1; i >= 0; i--) if (gs[i]) idx.push(i);
+    const parts = idx.map(i => i === 1 && gs[i] === 1 ? 'mil' : join([pt1000(gs[i]), SC[i][gs[i] === 1 ? 0 : 1]]));
+    let out = parts[0];
+    for (let k = 1; k < parts.length; k++) { const g = gs[idx[k]]; out += (k === parts.length - 1 && (g < 100 || g % 100 === 0) ? ' e ' : ' ') + parts[k]; }
+    return out;
+  };
+  /* Hindi (Indian system: हज़ार, लाख, करोड़, अरब, खरब, नील) */
+  const HI100 = 'शून्य एक दो तीन चार पाँच छह सात आठ नौ दस ग्यारह बारह तेरह चौदह पंद्रह सोलह सत्रह अठारह उन्नीस बीस इक्कीस बाईस तेईस चौबीस पच्चीस छब्बीस सत्ताईस अट्ठाईस उनतीस तीस इकतीस बत्तीस तैंतीस चौंतीस पैंतीस छत्तीस सैंतीस अड़तीस उनतालीस चालीस इकतालीस बयालीस तैंतालीस चौवालीस पैंतालीस छियालीस सैंतालीस अड़तालीस उनचास पचास इक्यावन बावन तिरपन चौवन पचपन छप्पन सत्तावन अट्ठावन उनसठ साठ इकसठ बासठ तिरसठ चौंसठ पैंसठ छियासठ सड़सठ अड़सठ उनहत्तर सत्तर इकहत्तर बहत्तर तिहत्तर चौहत्तर पचहत्तर छिहत्तर सतहत्तर अठहत्तर उन्यासी अस्सी इक्यासी बयासी तिरासी चौरासी पचासी छियासी सत्तासी अट्ठासी नवासी नब्बे इक्यानवे बानवे तिरानवे चौरानवे पचानवे छियानवे सत्तानवे अट्ठानवे निन्यानवे'.split(' ');
+  const hiWords = n => {
+    if (n === 0) return 'शून्य';
+    const SC = ['हज़ार', 'लाख', 'करोड़', 'अरब', 'खरब', 'नील'], u = n % 1000, pairs = [], out = [];
+    for (let m = Math.floor(n / 1000); m > 0; m = Math.floor(m / 100)) pairs.push(m % 100);
+    for (let i = pairs.length - 1; i >= 0; i--) if (pairs[i]) out.push(HI100[pairs[i]] + ' ' + SC[i]);
+    if (u) out.push(u >= 100 ? HI100[Math.floor(u / 100)] + ' सौ' + (u % 100 ? ' ' + HI100[u % 100] : '') : HI100[u]);
+    return out.join(' ');
+  };
+  /* Arabic (Modern Standard; scale nouns take dual, plural or accusative forms as the grammar requires) */
+  const AR1 = ['صفر', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+  const AR10 = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+  const AR100 = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+  const AR_SC = [null, ['ألف', 'ألفان', 'آلاف', 'ألفًا'], ['مليون', 'مليونان', 'ملايين', 'مليونًا'], ['مليار', 'ملياران', 'مليارات', 'مليارًا'], ['تريليون', 'تريليونان', 'تريليونات', 'تريليونًا']];
+  const ar100 = r => r < 20 ? AR1[r] : (r % 10 ? AR1[r % 10] + ' و' : '') + AR10[Math.floor(r / 10)];
+  const ar1000 = g => { const h = Math.floor(g / 100), r = g % 100; return [h ? AR100[h] : '', r ? ar100(r) : ''].filter(Boolean).join(' و'); };
+  const arScale = (g, S) => {
+    const h = Math.floor(g / 100), r = g % 100, H = h === 2 && r < 3 ? 'مائتا' : AR100[h];
+    if (!h) return r === 1 ? S[0] : r === 2 ? S[1] : r <= 10 ? AR1[r] + ' ' + S[2] : ar100(r) + ' ' + S[3];
+    if (r === 0) return H + ' ' + S[0];
+    if (r === 1) return H + ' ' + S[0] + ' و' + S[0];
+    if (r === 2) return H + ' ' + S[0] + ' و' + S[1];
+    return H + ' و' + (r <= 10 ? AR1[r] + ' ' + S[2] : ar100(r) + ' ' + S[3]);
+  };
+  const arWords = n => {
+    if (n === 0) return 'صفر';
+    const gs = groups(n), out = [];
+    for (let i = gs.length - 1; i >= 0; i--) if (gs[i]) out.push(i ? arScale(gs[i], AR_SC[i]) : ar1000(gs[i]));
+    return out.join(' و');
+  };
+  const LANGS = {
+    en: { words: enWords, minus: 'minus', dec: 'point', dig: EN1.slice(0, 10) },
+    es: { words: esWords, minus: 'menos', dec: 'coma', dig: ES1.slice(0, 10) },
+    pt: { words: ptWords, minus: 'menos', dec: 'vírgula', dig: PT1.slice(0, 10) },
+    id: { words: idWords, minus: 'minus', dec: 'koma', dig: ID1 },
+    hi: { words: hiWords, minus: 'ऋण', dec: 'दशमलव', dig: HI100.slice(0, 10) },
+    ar: { words: arWords, minus: 'سالب', dec: 'فاصلة', dig: AR1.slice(0, 10) }
+  };
+  /* Input: Latin, Arabic-Indic, Persian and Devanagari digits; spaces, _ and ' ignored; "1.500" / "1,500" follow the page language's convention; Indian grouping 1,23,456 is accepted */
+  const parse = (raw, pl) => {
+    let s = String(raw).replace(/[\u0660-\u0669]/g, c => c.charCodeAt(0) - 0x660).replace(/[\u06f0-\u06f9]/g, c => c.charCodeAt(0) - 0x6f0).replace(/[\u0966-\u096f]/g, c => c.charCodeAt(0) - 0x966)
+      .replace(/\u066b/g, '.').replace(/[\u066c\u060c]/g, ',').replace(/[\s\u00a0\u202f_'\u2019]/g, ''), neg = false;
+    if (/^[-\u2212+]/.test(s)) { neg = s[0] !== '+'; s = s.slice(1); }
+    (/^[\d.,]+$/.test(s) && /\d/.test(s)) || bad();
+    const gx = c => c === '.' ? /^\d{1,3}(?:\.\d{3})+$/ : /^(?:\d{1,3}(?:,\d{3})+|\d{1,2}(?:,\d{2})+,\d{3})$/, cnt = c => s.split(c).length - 1, dots = cnt('.'), com = cnt(',');
+    let ip = s, fp = '';
+    if (dots && com) {
+      const d = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',', g = d === '.' ? ',' : '.', pr = s.split(d);
+      (pr.length === 2 && gx(g).test(pr[0]) && /^\d*$/.test(pr[1])) || bad();
+      ip = pr[0].split(g).join(''); fp = pr[1];
+    } else if (dots + com) {
+      const c = dots ? '.' : ',', pr = s.split(c);
+      if (pr.length > 2) { gx(c).test(s) || bad(); ip = pr.join(''); }
+      else if (c === (['id', 'es', 'pt'].includes(pl) ? '.' : ',') && /^[1-9]\d{0,2}$/.test(pr[0]) && /^\d{3}$/.test(pr[1])) ip = pr[0] + pr[1];
+      else { ip = pr[0]; fp = pr[1]; }
+    }
+    ip = ip.replace(/^0+(?=\d)/, '') || '0';
+    (ip.length <= 15 && fp.length <= 30) || bad('n2w_range');
+    const n = Number(ip);
+    return { neg: neg && (n > 0 || /[1-9]/.test(fp)), int: n, frac: fp };
+  };
+  const style = (s, m) => m === 'upper' ? s.toUpperCase() : m === 'title' ? s.replace(/(^|[\s-])(\p{L})/gu, (a, b, c) => b + c.toUpperCase()) : m === 'sentence' ? s.replace(/\p{L}/u, c => c.toUpperCase()) : s;
+  /* raw input, page language (input convention), output language, { brit, unit, cs } */
+  const text = (raw, pl, ol, o = {}) => {
+    const L = LANGS[ol] || bad(), p = parse(raw, pl), u = String(o.unit || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    return style(join([p.neg ? L.minus : '', L.words(p.int, o), p.frac ? join([L.dec, [...p.frac].map(c => L.dig[+c]).join(' ')]) : '', u]), o.cs);
+  };
+  return { text };
+})();
+/* N2W-END */
 const hex2 = n => Math.round(n).toString(16).padStart(2, '0').toUpperCase();
 const hsl2rgb = (H, S2, L2) => { H = ((H % 360) + 360) % 360; S2 /= 100; L2 /= 100; const k = n => (n + H / 30) % 12, a = S2 * Math.min(L2, 1 - L2), f = n => L2 - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return [f(0) * 255, f(8) * 255, f(4) * 255]; };
 const rgb2hsl = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn; let H = 0, S2 = 0; if (dl) { S2 = dl / (1 - Math.abs(2 * l - 1)); H = mx === r ? ((g - b) / dl) % 6 : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4; H *= 60; if (H < 0) H += 360; } return [H, S2 * 100, l * 100]; };
@@ -581,6 +714,7 @@ const apaUI = root => {
   renderList(); refresh();
 };
 
+const N2W_OPTS = [['en', 'English'], ['es', 'Español'], ['pt', 'Português'], ['id', 'Bahasa Indonesia'], ['hi', 'हिन्दी'], ['ar', 'العربية']];
 /* ---------- tool registry: id -> { live, f: fields, run } ---------- */
 const T = {
   'word-counter': { live: 1, f: [A('input')], run: v => `${I.words}: ${nf((v.input.match(/\S+/g) || []).length, 0)}\n${I.chars}: ${nf(countChars(v.input), 0)}\n${I.lines}: ${nf(v.input.split('\n').length, 0)}` },
@@ -592,9 +726,10 @@ const T = {
   } },
   'ai-text-cleaner': { live: 1, f: [A('input'), CK('c_md', true), CK('c_ref', true), CK('c_inv', true), CK('c_sp', true), CK('c_bp', false), CK('c_emo', false), CK('c_dash', false), CK('c_quo', false)], run: v => clean(v.input, v) },
   'remove-duplicate-lines': { live: 1, f: [A('input')], run: v => { const s = new Set(); return v.input.split('\n').filter(x => !s.has(x) && s.add(x)).join('\n'); } },
-  'remove-line-breaks': { live: 1, f: [A('input')], run: v => v.input.replace(/\s*\r?\n\s*/g, ' ').trim() },
+  'remove-line-breaks': { live: 1, f: [A('input')], run: v => v.input.split('\n').map(x => x.trim()).filter(Boolean).join(' ') },
   'sort-lines': { live: 1, f: [A('input'), S('mode', [['asc', 'A → Z'], ['desc', 'Z → A']])], run: v => { const a = v.input.split('\n').sort((x, y) => x.localeCompare(y, lang, { numeric: true })); return (v.mode === 'desc' ? a.reverse() : a).join('\n'); } },
   'apa-reference-generator': { custom: apaUI },
+  'excel-to-statistics': { custom: () => {} }, /* UI lives in stats.js, loaded only on this page (see build.js) */
 
   'morse-code': { live: 1, f: [A('input'), ModeSel('t2m', 'm2t'), S('alpha', [['lat', I.lat || 'Latin'], ['ara', I.ara || 'Arabic']])], run: v => v.mode === 't2m' ? morseEnc(v.input, v.alpha === 'ara') : morseDec(v.input, v.alpha === 'ara') },
   'caesar-cipher': { live: 1, f: [A('input'), ModeSel('encr', 'decr'), N('shift', 3, { min: 1, max: 25, step: 1 })], run: v => { const k = num(v.shift); (Number.isInteger(k) && k >= 1 && k <= 25) || bad(); return rot(v.input, v.mode === 'encr' ? k : -k); } },
@@ -621,6 +756,7 @@ const T = {
     if (/^\d+$/.test(s)) { const n = Number(s); (n >= 1 && n <= 3999) || bad(); return `${n} = ${toRoman(n)}`; }
     const r = s.toUpperCase(); (r && RX.test(r)) || bad(); return `${r} = ${fromRoman(r)}`;
   } },
+  'number-to-words': { live: 1, f: [X('n2w_in'), S('n2w_lang', N2W_OPTS, Math.max(0, N2W_OPTS.findIndex(x => x[0] === lang))), S('n2w_case', modes('lower', 'sentence', 'title', 'upper')), X('n2w_unit', '', 1), CK('n2w_brit', false)], run: v => N2W.text(v.n2w_in, lang, v.n2w_lang, { brit: v.n2w_brit, unit: v.n2w_unit, cs: v.n2w_case }) },
   'colour-converter': { live: 1, f: [X('clr')], run: v => {
     const [r, g, b] = parseColour(v.clr), [H, S2, L2] = rgb2hsl(r, g, b);
     const hex = '#' + hex2(r) + hex2(g) + hex2(b);
@@ -645,7 +781,7 @@ const T = {
   'discount-calculator': { live: 1, f: [N('pr'), N('p')], run: v => { const a = num(v.pr), p = num(v.p); (a >= 0 && p >= 0 && p <= 100) || bad(); return `${I.fin}: ${nf(a * (1 - p / 100))}\n${I.sv}: ${nf(a * p / 100)}`; } },
 
   'image-converter': { acc: 'image/*', f: [FL('file'), S('mode', [['png', 'PNG'], ['jpeg', 'JPG'], ['webp', 'WEBP']]), RG('quality', 90)], run: v => { if (v.file.size > 30e6) bad(); return img(v.file, 0, 0, 'image/' + v.mode, num(v.quality) / 100); } },
-  'image-resizer': { acc: 'image/*', f: [FL('file'), N('wd'), N('ht', undefined, { opt: 1 })], run: async v => { if (v.file.size > 30e6) bad(); const bm = await createImageBitmap(v.file), w = Math.round(num(v.wd)), hh = v.ht ? Math.round(num(v.ht)) : Math.round(bm.height * w / bm.width); return img(v.file, w, hh, v.file.type === 'image/png' ? 'image/png' : v.file.type === 'image/webp' ? 'image/webp' : 'image/jpeg', .92); } },
+  'image-resizer': { acc: 'image/*', f: [FL('file'), N('wd'), N('ht', undefined, { opt: 1 })], run: async v => { if (v.file.size > 30e6) bad(); const bm = await createImageBitmap(v.file), w = Math.round(num(v.wd)), hh = v.ht ? Math.round(num(v.ht)) : Math.round(bm.height * w / bm.width); bm.close(); return img(v.file, w, hh, v.file.type === 'image/png' ? 'image/png' : v.file.type === 'image/webp' ? 'image/webp' : 'image/jpeg', .92); } },
   'file-to-base64': { f: [FL('file')], run: v => new Promise((ok, no) => { if (v.file.size > 10e6) return no(new Error('size')); const r = new FileReader; r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(v.file); }) },
   'json-to-csv': { f: [A('input')], run: v => {
     const a = JSON.parse(v.input); (Array.isArray(a) && a.length) || bad();
@@ -692,7 +828,8 @@ const kofi = h('p', { className: 'donate' }, h('a', { href: 'https://ko-fi.com/c
 root.replaceChildren(fl, acts, h('h2', { id: 'rt' }, I.result), sw, res, kofi);
 res.setAttribute('aria-labelledby', 'rt');
 
-let blobUrl = '', seq = 0;
+let blobUrl = '', seq = 0, tm = 0;
+const MAXLEN = 500000;
 const show = r => {
   const o = typeof r === 'string' ? { t: r } : r;
   res.textContent = o.t || ''; cp.hidden = !o.t;
@@ -706,15 +843,17 @@ const go = async manual => {
   for (const f of tool.f) {
     const e = el[f.k];
     v[f.k] = f.ty === 'file' ? e.files[0] : f.ty === 'chk' ? e.checked : e.value;
+    if (typeof v[f.k] === 'string' && v[f.k].length > MAXLEN) { show(I.big || I.err); return; }
     if (!['sel', 'range', 'chk'].includes(f.ty) && !f.opt && !v[f.k]) ok = false;
   }
   if (!ok) { show(manual ? I.err : ''); return; }
   try { const out = await tool.run(v); if (my === seq) show(out); }
   catch (e) { if (my === seq) show(I[e && e.k] || I.err); }
 };
-form.addEventListener('submit', e => { e.preventDefault(); go(true); });
-tool.live && form.addEventListener('input', () => go(false));
-$('#clr-btn').addEventListener('click', () => { seq++; tool.f.forEach(setDef); show(''); });
+form.addEventListener('submit', e => { e.preventDefault(); clearTimeout(tm); go(true); });
+/* live tools wait for a short pause in typing instead of re-running on every keystroke */
+tool.live && form.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => go(false), 150); });
+$('#clr-btn').addEventListener('click', () => { clearTimeout(tm); seq++; tool.f.forEach(setDef); show(''); });
 cp.addEventListener('click', async () => { try { await navigator.clipboard.writeText(res.textContent); cp.textContent = I.copied; setTimeout(() => cp.textContent = I.copy, 1500); } catch (e) { /* clipboard blocked */ } });
 root.parentNode.insertBefore(form, root); form.append(root);
 })();
