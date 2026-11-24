@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; frame-src https:; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https: 'sha256-HaB7ApRP1IusDy4v7Q4KMrg27nOu5PHzY3jeIjWS7w0=' 'sha256-jVmkkj+5iF5xhjxjOuvGbRuNawGZXEEIYYaOufzAv8I='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; frame-src https:; upgrade-insecure-requests
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
