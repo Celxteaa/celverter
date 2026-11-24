@@ -33,8 +33,7 @@ const faqLD = (id, l) => ({ '@type': 'FAQPage', mainEntity: faqOf(id, l).map(([q
 const LOGO = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="9" fill="#3b3bdb"/><path d="M20.5 11.2A7.4 7.4 0 1 0 20.5 20.8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/><rect x="20" y="13.5" width="5" height="5" rx="1" transform="rotate(45 22.5 16)" fill="#f2b134"/></svg>';
 /* Monetag tags, verbatim from the Monetag dashboard, placed right after <head>. The two inline snippets are allowed in the CSP by hash instead of 'unsafe-inline'. */
 const MT_INLINE = [
-  "(function(s){s.dataset.zone='12337820',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))",
-  "(function(s){s.dataset.zone='12337799',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))"
+  "(function(s){s.dataset.zone='12337820',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))"
 ];
 const MT_TAGS = '<script src="https://5gvci.com/act/files/tag.min.js?z=12337826" data-cfasync="false" async></script>' + MT_INLINE.map(c => '<script>' + c + '</script>').join('') + '<script src="https://quge5.com/88/tag.min.js" data-zone="314779" async data-cfasync="false"></script>';
 const MT_HASHES = MT_INLINE.map(c => " 'sha256-" + crypto.createHash('sha256').update(c).digest('base64') + "'").join('');
