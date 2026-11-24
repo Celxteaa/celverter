@@ -71,3 +71,11 @@ input[type=checkbox]{width:1.25rem;height:1.25rem;flex:none;accent-color:var(--p
 .cite{margin:.5rem 0 0;color:var(--mut);font-size:.95rem}
 ul.reflist{list-style:none;margin:.4rem 0 0;padding:0;display:grid;gap:.6rem}ul.reflist li{padding:.8rem 1rem;background:var(--bg);border:1px solid var(--ln);border-radius:10px}
 .acts.sm{margin-top:.5rem}.acts.sm .btn{padding:.35rem .8rem;font-size:.9rem}
+.stat h2.st-first{margin-top:0}.st-scroll{overflow-x:auto;margin:.6rem 0 .2rem;border:1px solid var(--ln);border-radius:10px}
+table.st-t{border-collapse:collapse;width:100%;font-size:.95rem}.st-t caption{text-align:start;font-weight:700;padding:.55rem .8rem;background:var(--bg)}
+.st-t th,.st-t td{padding:.4rem .7rem;border-top:1px solid var(--ln);text-align:start;white-space:nowrap}.st-t thead th{background:var(--bg);font-weight:700}.st-t td.n{text-align:end;font-variant-numeric:tabular-nums}
+.st-t tbody th{font-weight:600}.st-t td select{width:auto;padding:.3rem .5rem;min-height:2.25rem}
+.st-warn{margin:.6rem 0;padding:.7rem .9rem;border:1px solid var(--acc);border-inline-start:6px solid var(--acc);border-radius:10px;background:var(--bg)}
+.st-card{margin-top:.7rem;padding:.4rem .9rem .9rem;border:1px solid var(--ln);border-radius:10px;background:var(--bg)}.st-h{font-weight:700;margin:0}.st-p{margin-top:.3rem}
+.stat h3{font-size:1.15rem;margin:1.6rem 0 .2rem}.st-out:empty{display:none}
+
